@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-
+import { Firestore, collection, addDoc } from '@angular/fire/firestore';
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet],
@@ -9,4 +9,20 @@ import { RouterOutlet } from '@angular/router';
 })
 export class App {
   protected readonly title = signal('corefinance');
+  constructor(private firestore: Firestore) {}
+
+  async addItem() {
+    try {
+      const itemsCollection = collection(this.firestore, 'items'); // 'items' is the collection name
+      const data = {
+        name: 'Laptop',
+        price: 150000,
+        createdAt: new Date()
+      };
+      await addDoc(itemsCollection, data);
+      console.log('Item added successfully!');
+    } catch (error) {
+      console.error('Error adding item:', error);
+    }
+  }
 }
