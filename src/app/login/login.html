@@ -1,1 +1,10 @@
-<p>login works!</p>
+<div style="width:300px;margin:100px auto;">
+  <h2>Login</h2>
+
+  <input type="text" [(ngModel)]="username" placeholder="Username" class="form-control mb-2">
+  <input type="text"  [(ngModel)]="password" placeholder="Password" class="form-control mb-2">
+
+  <button (click)="login()" class="btn btn-primary w-100">Login</button>
+
+  <p style="color:red;" *ngIf="error">{{ error }}</p>
+</div>
