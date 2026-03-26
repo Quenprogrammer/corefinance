@@ -1,0 +1,193 @@
+// user-variables.scss
+// Use this to overwrite Bootstrap and Front variables
+//
+
+
+// Example of a variable override to change Front's primary color and font size
+// Remove the "//" to comment it in and see it in action!
+// $font-size-base: .875rem;
+
+
+
+// The color of the SVG loader should be modified manually.
+// See assets/svg/components/circle-preloader.svg
+//
+// Variables
+// --------------------------------------------------
+
+// Import Bootstrap functions to use inside variables values
+@import "bootstrap/scss/functions";
+
+
+// Prefix for CSS variables and icons
+
+$prefix:                      yex- !default;
+$icon-prefix:                 ai- !default;
+
+
+//== Colors
+//
+// Gray and brand colors to use across the Theme.
+
+// Grayscale
+$white:                       #fff !default;
+$gray-100:                    #f6f9fc !default;
+$gray-200: rgba(237, 241, 245, 0.84) !default;
+$gray-300: #bdbfc0 !default;
+$gray-400:                    #d7dde2 !default;
+$gray-500:                    #b4bbc3 !default;
+$gray-600:                    #858c97 !default;
+$gray-700:                    #576071 !default;
+$gray-800:                    #434a57 !default;
+$gray-900:                    #121519 !default;
+$black:                       #000 !default;
+
+// Disable Bootstrap's default $colors map
+$colors: () !default;
+
+// The contrast ratio to reach against white, to determine if color changes from "light" to "dark". Acceptable values for WCAG 2.0 are 3, 4.5 and 7.
+// See https://www.w3.org/TR/WCAG20/#visual-audio-contrast-contrast
+$min-contrast-ratio:   2 !default;
+
+// Theme colors
+$primary:                     #448c74 !default;
+$secondary:                   $gray-200 !default;
+$info:                        #2b186f !default;
+$success:                     #3fca90 !default;
+$warning:                     #edcb50 !default;
+$danger:                      #ed5050 !default;
+$light:                       $white !default;
+$dark:                        $gray-900 !default;
+
+$primary-text-emphasis:       darken($primary, 10%) !default;
+$secondary-text-emphasis:     $gray-700 !default;
+$success-text-emphasis:       darken($success, 10%) !default;
+$info-text-emphasis:          darken($info, 10%) !default;
+$warning-text-emphasis:       darken($warning, 10%) !default;
+$danger-text-emphasis:        darken($danger, 10%) !default;
+$light-text-emphasis:         $gray-700 !default;
+$dark-text-emphasis:          $gray-900 !default;
+
+$primary-bg-subtle:           tint-color($primary, 90%) !default;
+$secondary-bg-subtle:         $gray-100 !default;
+$success-bg-subtle:           tint-color($success, 90%) !default;
+$info-bg-subtle:              tint-color($info, 90%) !default;
+$warning-bg-subtle:           tint-color($warning, 90%) !default;
+$danger-bg-subtle:            tint-color($danger, 90%) !default;
+$light-bg-subtle:             $white !default;
+$dark-bg-subtle:              tint-color($dark, 92%) !default;
+
+$primary-border-subtle:       tint-color($primary, 80%) !default;
+$secondary-border-subtle:     $gray-200 !default;
+$success-border-subtle:       tint-color($success, 80%) !default;
+$info-border-subtle:          tint-color($info, 80%) !default;
+$warning-border-subtle:       tint-color($warning, 80%) !default;
+$danger-border-subtle:        tint-color($danger, 80%) !default;
+$light-border-subtle:         $gray-100 !default;
+$dark-border-subtle:          $gray-200 !default;
+
+// User selection color
+$user-selection-color:        rgba(var(--#{$prefix}primary-rgb), .22) !default;
+
+
+// Options
+//
+// Modifying Bootstrap global options
+
+$enable-negative-margins:     true !default;
+$enable-smooth-scroll:        false !default;
+$enable-dark-mode:            true !default;
+
+
+// Spacing
+
+$spacer:                      1rem !default;
+
+
+// Grid containers
+//
+// Modifying default Bootstrap"s $container-max-widths map (max-width of .container)
+$container-max-widths: (
+  sm: 95%,
+  md: 95%,
+  lg: 95%,
+  xl: 95%,
+  xxl: 1328px
+) !default;
+
+
+// Container padding
+
+$container-padding-x:                       2rem !default;
+
+
+// Body
+
+$body-color:                                $gray-700 !default;
+$body-bg:                                   $white !default;
+
+$body-secondary-color:                      $gray-600 !default;
+$body-tetriary-color:                       $gray-500 !default;
+
+
+// Links
+
+$link-color:                                $primary !default;
+$link-decoration:                           underline !default;
+$link-hover-color:                          darken($link-color, 8%) !default;
+$link-hover-decoration:                     none !default;
+$link-transition:                           color .2s ease-in-out !default;
+$emphasized-link-hover-darken-percentage:   0% !default;
+
+
+// Components
+//
+// Define common padding and border radius sizes and more.
+
+$border-width:                              1px !default;
+
+$border-color:                              $gray-100 !default;
+$border-color-translucent:                  rgba($black, .1) !default;
+
+$border-radius:                             1rem !default;
+$border-radius-sm:                          calc(var(--#{$prefix}border-radius) * .75) !default;
+$border-radius-lg:                          calc(var(--#{$prefix}border-radius) * 1.125) !default;
+$border-radius-xl:                          calc(var(--#{$prefix}border-radius) * 1.5) !default;
+$border-radius-xxl:                         calc(var(--#{$prefix}border-radius) * 2.25) !default;
+$border-radius-2xl:                         var(--#{$prefix}border-radius-xxl) !default;
+$border-radius-pill:                        50rem !default;
+
+$caret-width:                               1.375em !default;
+$caret-spacing:                             .15em !default;
+
+
+// Update Bootstrap's default z-index map
+$zindex-levels: (
+  n1: -1,
+  0: 0,
+  1: 1,
+  2: 2,
+  3: 3,
+  4: 4,
+  5: 5,
+  10: 10
+) !default;
+
+
+// Theme shadows (if enabled)
+
+$box-shadow-sm:                             0 .375rem .75rem -.125rem rgba(208, 208, 196, .24) !default;
+$box-shadow:                                0 .4375rem 1.25rem rgba(208, 208, 196, .32) !default;
+$box-shadow-lg:                             0 .5rem 1.75rem -.125rem rgba(208, 208, 196, .48) !default;
+
+
+// Fonts
+//
+// Font, line-height, and color for body text, headings, and more.
+
+$font-family-sans-serif:                    "Inter", sans-serif !default;
+$font-weight-normal:                        400 !default;
+$font-weight-medium:                        500 !default;
+$font-weight-semibold:                      600 !default;
+$font-weight-bold:                          700 !default;
+$font-weight-bolder:                        800 !default;

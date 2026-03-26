@@ -1,0 +1,62 @@
+// Front Default Color Variables
+// =========================================================
+
+$root-path:                                                 "../";
+
+
+
+$gray-100: #f4f6f8; // Polaris Sky Light
+$gray-200: #dfe3e8; // Polaris Sky
+$gray-300: #dfe3e8; // Polaris Sky Dark
+$gray-400: #c4cdd5; // Polaris Ink Light
+$gray-500: #a3aabf; // Polaris Ink
+$gray-600: #919eab; // Polaris Ink Dark
+$gray-700: #637381; // Polaris Navy Light
+$gray-800: #454f5b; // Polaris Navy
+$gray-900: #161e26; // Polaris Navy Dark
+
+// Grays
+/*$gray-100:                                                  #f9fafc;
+$gray-200:                                                  #f8fafd;
+$gray-300:                                                  #e7eaf3;
+$gray-400:                                                  #bdc5d1;
+$gray-500:                                                  #97a4af;
+$gray-600:                                                  #8c98a4;
+$gray-700:                                                  #677788;
+$gray-800:                                                  #71869d;
+$gray-900:                                                  #1e2022;*/
+
+// Colors
+$white:                                                     #fff;
+$dark:                                                      #132144;
+$blue:                                                      #377dff;
+$teal:                                                      #00c9a7;
+$cyan:                                                      #09a5be;
+$yellow:                                                    #f5ca99;
+$red: #ff0b4d;
+
+// Theme Colors
+$primary: #ff6400;
+$primary-deep: #7C99B7;
+$secondary: #244C71;
+$success:                                                   $teal;
+$info:                                                      $cyan;
+$warning:                                                   #ffef9d;
+$danger:                                                    $red;
+$dark:                                                      $dark;
+
+// Theme Soft Colors
+$primary-soft:                                              rgba($primary, .1);
+$primary-deep-soft:                                              rgba($primary-deep, .1);
+$secondary-soft:                                            rgba($secondary, .1);
+$success-soft:                                              rgba($success, .1);
+$info-soft:                                                 rgba($info, .1);
+$warning-soft:                                              rgba($warning, .1);
+$danger-soft:                                               rgba($danger, .1);
+$light-soft:                                                rgba($gray-100, .1);
+$dark-soft:                                                 rgba($dark, .1);
+
+
+$body-bg:                                                   $white !default;
+$body-color:                                                $gray-700 !default;
+$white-bg:                                                  #fff !default;
