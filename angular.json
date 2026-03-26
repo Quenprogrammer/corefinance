@@ -30,6 +30,8 @@
               }
             ],
             "styles": [
+              "src/styles.scss",
+              "src/scss/theme.scss",
               "src/styles.scss"
             ]
           },
