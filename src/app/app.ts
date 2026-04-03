@@ -1,10 +1,9 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Firestore, collection, addDoc } from '@angular/fire/firestore';
-import {Transactions} from './admin/transactions/transactions';
-@Component({
+ @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Transactions],
+  imports: [RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

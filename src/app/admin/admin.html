@@ -1,6 +1,6 @@
-<div class="dashboard-wrapper" [class.dark-theme]="isDarkMode">
-  <!-- Sidebar -->
-<!--  <nav class="sidebar" [class.collapsed]="sidebarCollapsed">
+<!--<div class="dashboard-wrapper" [class.dark-theme]="isDarkMode">
+  &lt;!&ndash; Sidebar &ndash;&gt;
+&lt;!&ndash;  <nav class="sidebar" [class.collapsed]="sidebarCollapsed">
     <div class="sidebar-brand">
       <i class="fas fa-chart-pie me-2"></i>
       <span class="brand-text" *ngIf="!sidebarCollapsed">FinDash<span class="text-primary">Pro</span></span>
@@ -135,9 +135,9 @@
         </div>
       </div>
     </div>
-  </nav>-->
+  </nav>&ndash;&gt;
 
-  <!-- Main Content -->
+  &lt;!&ndash; Main Content &ndash;&gt;
   <main class="main-content" [class.expanded]="sidebarCollapsed">
 
     <nav class="navbar navbar-expand navbar-light bg-white shadow-sm px-4">
@@ -158,12 +158,12 @@
         </div>
 
         <div class="d-flex align-items-center">
-          <!-- Theme Toggle -->
+          &lt;!&ndash; Theme Toggle &ndash;&gt;
           <button class="btn btn-link text-muted me-2" (click)="toggleTheme()">
             <i class="fas" [class.fa-moon]="!isDarkMode" [class.fa-sun]="isDarkMode"></i>
           </button>
 
-          <!-- Notifications -->
+          &lt;!&ndash; Notifications &ndash;&gt;
           <div class="dropdown me-3">
             <button class="btn btn-link text-muted position-relative" type="button"
                     data-bs-toggle="dropdown" (click)="showNotifications = !showNotifications">
@@ -201,7 +201,7 @@
             </div>
           </div>
 
-          <!-- User Dropdown -->
+          &lt;!&ndash; User Dropdown &ndash;&gt;
           <div class="dropdown">
             <button class="btn btn-link text-decoration-none d-flex align-items-center" type="button"
                     data-bs-toggle="dropdown" (click)="showUserMenu = !showUserMenu">
@@ -241,9 +241,9 @@
       </div>
     </nav>
 
-    <!-- Dashboard Content -->
+    &lt;!&ndash; Dashboard Content &ndash;&gt;
     <div class="content p-4">
-      <!-- Welcome Banner -->
+      &lt;!&ndash; Welcome Banner &ndash;&gt;
 
       <div class="row mb-4">
         <div class="col-12">
@@ -266,10 +266,10 @@
         </div>
       </div>
 
-      <!-- Quick Actions -->
+      &lt;!&ndash; Quick Actions &ndash;&gt;
       <div class="row mb-4">
         <div class="col-md-3" *ngFor="let action of quickActions">
-          <div class="card quick-action-card text-center" [style.--action-color]="action.color">
+          <div class="card quick-action-card text-center" [style.&#45;&#45;action-color]="action.color">
             <div class="card-body">
               <i class="fas fa-3x mb-3" [class]="action.icon"></i>
               <h6 class="mb-0">{{ action.label }}</h6>
@@ -278,7 +278,7 @@
         </div>
       </div>
 
-      <!-- Stats Cards -->
+      &lt;!&ndash; Stats Cards &ndash;&gt;
       <div class="row mb-4">
         <div class="col-xl-3 col-md-6 mb-4" *ngFor="let stat of stats">
           <div class="card stat-card h-100">
@@ -301,7 +301,7 @@
         </div>
       </div>
 
-      <!-- Charts Row -->
+      &lt;!&ndash; Charts Row &ndash;&gt;
       <div class="row mb-4">
         <div class="col-xl-8 mb-4">
           <div class="card">
@@ -336,7 +336,7 @@
         </div>
       </div>
 
-      <!-- Recent Transactions -->
+      &lt;!&ndash; Recent Transactions &ndash;&gt;
       <div class="row mb-4">
         <div class="col-12">
           <div class="card">
@@ -413,9 +413,9 @@
         </div>
       </div>
 
-      <!-- Bottom Cards Row -->
+      &lt;!&ndash; Bottom Cards Row &ndash;&gt;
       <div class="row">
-        <!-- Pending Approvals -->
+        &lt;!&ndash; Pending Approvals &ndash;&gt;
         <div class="col-xl-4 mb-4">
           <div class="card h-100">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
@@ -459,7 +459,7 @@
           </div>
         </div>
 
-        <!-- NCOA Summary -->
+        &lt;!&ndash; NCOA Summary &ndash;&gt;
         <div class="col-xl-4 mb-4">
           <div class="card h-100">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
@@ -491,7 +491,7 @@
           </div>
         </div>
 
-        <!-- Budget Overview -->
+        &lt;!&ndash; Budget Overview &ndash;&gt;
         <div class="col-xl-4 mb-4">
           <div class="card h-100">
             <div class="card-header bg-white">
@@ -526,4 +526,47 @@
     </div>
   </main>
 
+</div>-->
+<app-dashboard></app-dashboard>
+<div class="tabs-container">
+  <!-- Tab Headers -->
+  <div class="tabs-header">
+    <button
+      *ngFor="let tab of tabs; let i = index"
+      class="tab-btn"
+      [class.active]="activeTab() === i"
+      (click)="setActiveTab(i)">
+      <i [class]="tab.icon"></i>
+      <span>{{ tab.label }}</span>
+      <span class="tab-badge" *ngIf="tab.badge">{{ tab.badge }}</span>
+    </button>
+  </div>
+
+  <!-- Tab Content -->
+  <div class="tabs-content">
+    <!-- Tab 1: Monthly Overview -->
+    <div class="tab-pane" *ngIf="activeTab() === 0">
+
+    </div>
+
+    <!-- Tab 2: Transaction Chart -->
+    <div class="tab-pane" *ngIf="activeTab() === 1">
+
+    </div>
+
+    <!-- Tab 3: Category Analysis -->
+    <div class="tab-pane" *ngIf="activeTab() === 2">
+
+    </div>
+
+    <!-- Tab 4: Year Comparison -->
+    <div class="tab-pane" *ngIf="activeTab() === 3">
+
+    </div>
+
+    <!-- Tab 5: Export & Reports -->
+    <div class="tab-pane" *ngIf="activeTab() === 4">
+
+    </div>
+  </div>
 </div>

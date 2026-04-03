@@ -1,8 +1,8 @@
 // src/app/core/services/master-data.service.ts
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, map, catchError, of, throwError } from 'rxjs'; // Add catchError, of, throwError
 import { FirebaseService } from './firebase.service';
-import { Payee, NCOACode, BankAccount } from '../model/master.model';
+import { Payee, NCOACode, BankAccount, Department, Budget } from '../model/master.model';
 import { Timestamp } from '@angular/fire/firestore';
 
 @Injectable({
@@ -14,11 +14,29 @@ export class MasterDataService {
   // ==================== PAYEE OPERATIONS ====================
 
   getPayees(): Observable<Payee[]> {
-    return this.firebaseService.getCollectionWithQuery('payees', 'isActive', '==', true, 'name', 'asc') as Observable<Payee[]>;
+    // Try with server-side sorting first
+    return (this.firebaseService.getCollectionWithQuery(
+      'payees', 'isActive', '==', true, 'name', 'asc'
+    ) as Observable<Payee[]>).pipe(
+      catchError((error) => {
+        // If index missing, fallback to client-side sorting
+        if (error?.code === 'failed-precondition' || error?.message?.includes('index')) {
+          console.warn('⚠️ Payees index missing, using client-side sorting');
+          return (this.firebaseService.getCollectionWithQuery(
+            'payees', 'isActive', '==', true
+          ) as Observable<Payee[]>).pipe(
+            map(payees => payees.sort((a, b) => a.name.localeCompare(b.name)))
+          );
+        }
+        return throwError(() => error);
+      })
+    );
   }
 
   getAllPayees(): Observable<Payee[]> {
-    return this.firebaseService.getCollection('payees') as Observable<Payee[]>;
+    return (this.firebaseService.getCollection('payees') as Observable<Payee[]>).pipe(
+      map(payees => payees.filter(p => p.isActive))
+    );
   }
 
   getPayeeById(id: string): Observable<Payee | null> {
@@ -61,11 +79,30 @@ export class MasterDataService {
   // ==================== NCOA CODE OPERATIONS ====================
 
   getNCOACodes(): Observable<NCOACode[]> {
-    return this.firebaseService.getCollectionWithQuery('ncoaCodes', 'isActive', '==', true, 'code', 'asc') as Observable<NCOACode[]>;
+    return (this.firebaseService.getCollectionWithQuery(
+      'ncoaCodes', 'isActive', '==', true, 'code', 'asc'
+    ) as Observable<NCOACode[]>).pipe(
+      catchError((error) => {
+        if (error?.code === 'failed-precondition' || error?.message?.includes('index')) {
+          console.warn('⚠️ NCOA codes index missing, using client-side sorting');
+          return (this.firebaseService.getCollectionWithQuery(
+            'ncoaCodes', 'isActive', '==', true
+          ) as Observable<NCOACode[]>).pipe(
+            map(codes => codes.sort((a, b) => a.code.localeCompare(b.code)))
+          );
+        }
+        return throwError(() => error);
+      })
+    );
   }
 
   getNCOACodesByCategory(category: string): Observable<NCOACode[]> {
-    return this.firebaseService.getCollectionWithQuery('ncoaCodes', 'category', '==', category) as Observable<NCOACode[]>;
+    // This query only uses where, no orderBy - doesn't need composite index
+    return (this.firebaseService.getCollectionWithQuery(
+      'ncoaCodes', 'category', '==', category
+    ) as Observable<NCOACode[]>).pipe(
+      map(codes => codes.filter(c => c.isActive).sort((a, b) => a.code.localeCompare(b.code)))
+    );
   }
 
   getNCOACodeById(id: string): Observable<NCOACode | null> {
@@ -91,7 +128,21 @@ export class MasterDataService {
   // ==================== BANK ACCOUNT OPERATIONS ====================
 
   getBankAccounts(): Observable<BankAccount[]> {
-    return this.firebaseService.getCollectionWithQuery('bankAccounts', 'isActive', '==', true, 'name', 'asc') as Observable<BankAccount[]>;
+    return (this.firebaseService.getCollectionWithQuery(
+      'bankAccounts', 'isActive', '==', true, 'name', 'asc'
+    ) as Observable<BankAccount[]>).pipe(
+      catchError((error) => {
+        if (error?.code === 'failed-precondition' || error?.message?.includes('index')) {
+          console.warn('⚠️ Bank accounts index missing, using client-side sorting');
+          return (this.firebaseService.getCollectionWithQuery(
+            'bankAccounts', 'isActive', '==', true
+          ) as Observable<BankAccount[]>).pipe(
+            map(accounts => accounts.sort((a, b) => a.name.localeCompare(b.name)))
+          );
+        }
+        return throwError(() => error);
+      })
+    );
   }
 
   getBankAccountById(id: string): Observable<BankAccount | null> {
@@ -116,20 +167,39 @@ export class MasterDataService {
   }
 
   async updateBankBalance(id: string, amount: number, isAddition: boolean): Promise<void> {
-    const account = await this.firebaseService.getDocumentSnapshot('bankAccounts', id);
-    const currentBalance = account?.currentBalance || 0;
-    const newBalance = isAddition ? currentBalance + amount : currentBalance - amount;
+    try {
+      const account = await this.firebaseService.getDocumentSnapshot('bankAccounts', id);
+      const currentBalance = account?.get('currentBalance') || 0;
+      const newBalance = isAddition ? currentBalance + amount : currentBalance - amount;
 
-    await this.firebaseService.updateDocument('bankAccounts', id, {
-      currentBalance: newBalance,
-      updatedAt: Timestamp.now()
-    });
+      await this.firebaseService.updateDocument('bankAccounts', id, {
+        currentBalance: newBalance,
+        updatedAt: Timestamp.now()
+      });
+    } catch (error) {
+      console.error('Error updating bank balance:', error);
+      throw error;
+    }
   }
 
   // ==================== DEPARTMENT OPERATIONS ====================
 
   getDepartments(): Observable<Department[]> {
-    return this.firebaseService.getCollectionWithQuery('departments', 'isActive', '==', true, 'name', 'asc') as Observable<Department[]>;
+    return (this.firebaseService.getCollectionWithQuery(
+      'departments', 'isActive', '==', true, 'name', 'asc'
+    ) as Observable<Department[]>).pipe(
+      catchError((error) => {
+        if (error?.code === 'failed-precondition' || error?.message?.includes('index')) {
+          console.warn('⚠️ Departments index missing, using client-side sorting');
+          return (this.firebaseService.getCollectionWithQuery(
+            'departments', 'isActive', '==', true
+          ) as Observable<Department[]>).pipe(
+            map(depts => depts.sort((a, b) => a.name.localeCompare(b.name)))
+          );
+        }
+        return throwError(() => error);
+      })
+    );
   }
 
   async addDepartment(department: Partial<Department>): Promise<string> {
@@ -152,7 +222,10 @@ export class MasterDataService {
   // ==================== BUDGET OPERATIONS ====================
 
   getBudgets(year: number): Observable<Budget[]> {
-    return this.firebaseService.getCollectionWithQuery('budgets', 'year', '==', year) as Observable<Budget[]>;
+    // This query only uses where, no orderBy - doesn't need composite index
+    return this.firebaseService.getCollectionWithQuery(
+      'budgets', 'year', '==', year
+    ) as Observable<Budget[]>;
   }
 
   async addBudget(budget: Partial<Budget>): Promise<string> {

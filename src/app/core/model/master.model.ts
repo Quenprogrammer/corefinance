@@ -46,3 +46,29 @@ export interface Counter {
   id: string;
   value: number;
 }
+export interface Department {
+  id?: string;
+  code: string;
+  name: string;
+  description?: string;
+  headOfDepartment?: string;
+  budgetCode?: string;
+  isActive: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface Budget {
+  id?: string;
+  year: number;
+  month?: number;
+  ncoaCode: string;
+  allocatedAmount: number;
+  utilizedAmount: number;
+  remainingAmount: number;
+  departmentId?: string;
+  notes?: string;
+  isActive: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
