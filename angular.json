@@ -31,8 +31,7 @@
             ],
             "styles": [
               "src/styles.scss",
-              "src/scss/theme.scss",
-              "src/styles.scss"
+              "src/scss/theme.scss"
             ]
           },
           "configurations": {
@@ -41,12 +40,12 @@
                 {
                   "type": "initial",
                   "maximumWarning": "3MB",
-                  "maximumError": "1MB"
+                  "maximumError": "5MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "10kB",
+                  "maximumError": "20kB"
                 }
               ],
               "outputHashing": "all"

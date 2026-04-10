@@ -7,110 +7,9 @@ import { CategoryAnalysis, TransactionType } from '../../core/model/cashbook.mod
   selector: 'app-category-analysis',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div class="analysis-card mb-5" [class.receipt-card]="transactionType() === 'receipt'"
-         [class.payment-card]="transactionType() === 'payment'">
-      <div class="card-header-modern">
-        <div class="header-content">
-          <div class="header-icon">
-            <i class="bi" [ngClass]="transactionType() === 'receipt' ? 'bi-cash-stack' : 'bi-credit-card'"></i>
-          </div>
-          <div class="header-text">
-            <h5 class="card-title">{{ title }}</h5>
-            <p class="card-subtitle">
-              {{ transactionType() === 'receipt' ? 'Income sources analysis' : 'Expense categories breakdown' }}
-            </p>
-          </div>
-          <div class="header-stats" *ngIf="analysis().length > 0">
-            <div class="stat-chip">
-              <i class="bi bi-pie-chart"></i>
-              <span>{{ analysis().length }} Categories</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card-body-modern">
-        <div class="table-wrapper">
-          <table class="analysis-table">
-            <thead>
-            <tr>
-              <th class="category-col">Category</th>
-              <th class="amount-col">Amount</th>
-              <th class="percentage-col">Distribution</th>
-              <th class="count-col">Transactions</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr *ngFor="let item of analysis(); let i = index" class="analysis-row"
-                [style.animation-delay]="i * 0.05 + 's'">
-              <td class="category-cell">
-                <div class="category-wrapper">
-                    <span class="category-badge" [style.background]="getCategoryColor(item.category)">
-                      {{ getCategoryInitial(item.category) }}
-                    </span>
-                  <span class="category-name">{{ item.category }}</span>
-                </div>
-              </td>
-              <td class="amount-cell">
-                <div class="amount-display"
-                     [class.receipt-amount]="transactionType() === 'receipt'"
-                     [class.payment-amount]="transactionType() === 'payment'">
-                  <i class="bi"
-                     [ngClass]="transactionType() === 'receipt' ? 'bi-arrow-down-circle' : 'bi-arrow-up-circle'"></i>
-                  <span class="amount-value">{{ item.amount | number:'1.2-2' }}</span>
-                </div>
-              </td>
-              <td class="percentage-cell">
-                <div class="progress-container">
-                  <div class="progress-bar-modern"
-                       [class.receipt-progress]="transactionType() === 'receipt'"
-                       [class.payment-progress]="transactionType() === 'payment'"
-                       [style.width.%]="item.percentage">
-                    <span class="percentage-label">{{ item.percentage | number:'1.1-1' }}%</span>
-                  </div>
-                </div>
-              </td>
-              <td class="count-cell">
-                <div class="count-badge">
-                  <i class="bi bi-file-text"></i>
-                  <span>{{ item.count }}</span>
-                </div>
-              </td>
-            </tr>
-
-            <!-- Empty State -->
-            <tr *ngIf="analysis().length === 0">
-              <td colspan="4" class="empty-state">
-                <div class="empty-content">
-                  <i class="bi bi-folder-x"></i>
-                  <p>No data available</p>
-                  <small>No {{ transactionType() === 'receipt' ? 'receipt' : 'payment' }} transactions found</small>
-                </div>
-              </td>
-            </tr>
-            </tbody>
-            <tfoot *ngIf="analysis().length > 0">
-            <tr class="footer-row">
-              <td class="footer-label">Total</td>
-              <td class="footer-amount">
-                <strong>{{ getTotalAmount() | number:'1.2-2' }}</strong>
-              </td>
-              <td class="footer-percentage">100%</td>
-              <td class="footer-count">
-                <strong>{{ getTotalCount() }}</strong>
-              </td>
-            </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
-    </div>
-  `,
   styles: [`
     .analysis-card {
       background: white;
-      border-radius: 1rem;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
       overflow: hidden;
       transition: all 0.3s ease;
@@ -211,6 +110,81 @@ import { CategoryAnalysis, TransactionType } from '../../core/model/cashbook.mod
 
     .stat-chip i {
       font-size: 0.875rem;
+    }
+
+    /* Statistics Cards */
+    .stats-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      padding: 1.5rem;
+      background: #f8fafc;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .stat-card-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: white;
+      border-radius: 1rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-card-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .receipt-icon {
+      background: #f0fdf4;
+      color: #059669;
+    }
+
+    .payment-icon {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+
+    .stat-info {
+      flex: 1;
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      font-weight: 500;
+      display: block;
+    }
+
+    .stat-value {
+      display: block;
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-top: 0.25rem;
+      font-family: 'Courier New', monospace;
+    }
+
+    .stat-sub {
+      font-size: 0.65rem;
+      color: #9ca3af;
+      margin-top: 0.125rem;
+      display: block;
     }
 
     /* Body Styles */
@@ -475,6 +449,12 @@ import { CategoryAnalysis, TransactionType } from '../../core/model/cashbook.mod
     }
 
     /* Responsive Design */
+    @media (max-width: 1024px) {
+      .stats-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
     @media (max-width: 768px) {
       .card-header-modern {
         padding: 1rem;
@@ -489,13 +469,33 @@ import { CategoryAnalysis, TransactionType } from '../../core/model/cashbook.mod
         font-size: 1rem;
       }
 
+      .stats-cards {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        padding: 1rem;
+      }
+
+      .stat-card-item {
+        padding: 0.75rem;
+      }
+
+      .stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+      }
+
+      .stat-value {
+        font-size: 1rem;
+      }
+
       .analysis-table th,
       .analysis-table td {
         padding: 0.75rem;
       }
 
       .progress-container {
-        min-width: 120px;
+        min-width: 100px;
       }
 
       .progress-bar-modern {
@@ -507,6 +507,10 @@ import { CategoryAnalysis, TransactionType } from '../../core/model/cashbook.mod
     @media print {
       .analysis-card {
         box-shadow: none;
+        break-inside: avoid;
+      }
+
+      .stats-cards {
         break-inside: avoid;
       }
 
@@ -540,7 +544,156 @@ import { CategoryAnalysis, TransactionType } from '../../core/model/cashbook.mod
     .table-wrapper::-webkit-scrollbar-thumb:hover {
       background: #94a3b8;
     }
-  `]
+  `],
+  template: `
+    <div class="analysis-card mb-5" [class.receipt-card]="transactionType() === 'receipt'"
+         [class.payment-card]="transactionType() === 'payment'">
+      <div class="card-header-modern">
+        <div class="header-content">
+          <div class="header-icon">
+            <i class="bi" [ngClass]="transactionType() === 'receipt' ? 'bi-cash-stack' : 'bi-credit-card'"></i>
+          </div>
+          <div class="header-text">
+            <h5 class="card-title">{{ title() }}</h5>
+            <p class="card-subtitle">
+              {{ transactionType() === 'receipt' ? 'Income sources analysis' : 'Expense categories breakdown' }}
+            </p>
+          </div>
+          <div class="header-stats" *ngIf="analysis().length > 0">
+            <div class="stat-chip">
+              <i class="bi bi-pie-chart"></i>
+              <span>{{ analysis().length }} Categories</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistics Cards -->
+      <div class="stats-cards" *ngIf="analysis().length > 0">
+        <div class="stat-card-item">
+          <div class="stat-icon" [class.receipt-icon]="transactionType() === 'receipt'"
+               [class.payment-icon]="transactionType() === 'payment'">
+            <i class="bi bi-calculator-fill"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Total Amount</span>
+            <span class="stat-value">₦{{ getTotalAmount() | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <div class="stat-card-item">
+          <div class="stat-icon" [class.receipt-icon]="transactionType() === 'receipt'"
+               [class.payment-icon]="transactionType() === 'payment'">
+            <i class="bi bi-receipt"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Total Transactions</span>
+            <span class="stat-value">{{ getTotalCount() }}</span>
+          </div>
+        </div>
+
+        <div class="stat-card-item">
+          <div class="stat-icon" [class.receipt-icon]="transactionType() === 'receipt'"
+               [class.payment-icon]="transactionType() === 'payment'">
+            <i class="bi bi-star-fill"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Top Category</span>
+            <span class="stat-value">{{ getTopCategory()?.category || 'N/A' }}</span>
+            <small class="stat-sub">{{ getTopCategory()?.amount | number:'1.2-2' }}</small>
+          </div>
+        </div>
+
+        <div class="stat-card-item">
+          <div class="stat-icon" [class.receipt-icon]="transactionType() === 'receipt'"
+               [class.payment-icon]="transactionType() === 'payment'">
+            <i class="bi bi-graph-up"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Average {{ transactionType() === 'receipt' ? 'Receipt' : 'Payment' }}</span>
+            <span class="stat-value">₦{{ getAverageAmount() | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body-modern">
+        <div class="table-wrapper">
+          <table class="analysis-table">
+            <thead>
+            <tr>
+              <th class="category-col">Category</th>
+              <th class="amount-col">Amount</th>
+              <th class="percentage-col">Distribution</th>
+              <th class="count-col">Transactions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let item of analysis(); let i = index" class="analysis-row"
+                [style.animation-delay]="i * 0.05 + 's'">
+              <td class="category-cell">
+                <div class="category-wrapper">
+                    <span class="category-badge" [style.background]="getCategoryColor(item.category)">
+                      {{ getCategoryInitial(item.category) }}
+                    </span>
+                  <span class="category-name">{{ item.category }}</span>
+                </div>
+              </td>
+              <td class="amount-cell">
+                <div class="amount-display"
+                     [class.receipt-amount]="transactionType() === 'receipt'"
+                     [class.payment-amount]="transactionType() === 'payment'">
+                  <i class="bi"
+                     [ngClass]="transactionType() === 'receipt' ? 'bi-arrow-down-circle' : 'bi-arrow-up-circle'"></i>
+                  <span class="amount-value">{{ item.amount | number:'1.2-2' }}</span>
+                </div>
+              </td>
+              <td class="percentage-cell">
+                <div class="progress-container">
+                  <div class="progress-bar-modern"
+                       [class.receipt-progress]="transactionType() === 'receipt'"
+                       [class.payment-progress]="transactionType() === 'payment'"
+                       [style.width.%]="item.percentage">
+                    <span class="percentage-label">{{ item.percentage | number:'1.1-1' }}%</span>
+                  </div>
+                </div>
+              </td>
+              <td class="count-cell">
+                <div class="count-badge">
+                  <i class="bi bi-file-text"></i>
+                  <span>{{ item.count }}</span>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Empty State -->
+            <tr *ngIf="analysis().length === 0">
+              <td colspan="4" class="empty-state">
+                <div class="empty-content">
+                  <i class="bi bi-folder-x"></i>
+                  <p>No data available</p>
+                  <small>No {{ transactionType() === 'receipt' ? 'receipt' : 'payment' }} transactions found</small>
+                </div>
+              </td>
+            </tr>
+            </tbody>
+            <tfoot *ngIf="analysis().length > 0">
+            <tr class="footer-row">
+              <td class="footer-label">Total</td>
+              <td class="footer-amount">
+                <strong>{{ getTotalAmount() | number:'1.2-2' }}</strong>
+              </td>
+              <td class="footer-percentage">100%</td>
+              <td class="footer-count">
+                <strong>{{ getTotalCount() }}</strong>
+              </td>
+            </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  `
+
 })
 export class CategoryAnalysisComponent {
   private cashbookService = inject(CashbookService);
@@ -591,5 +744,19 @@ export class CategoryAnalysisComponent {
 
   getTotalCount(): number {
     return this.analysis().reduce((sum, item) => sum + item.count, 0);
+  }
+
+  getAverageAmount(): number {
+    const total = this.getTotalAmount();
+    const count = this.getTotalCount();
+    return count > 0 ? total / count : 0;
+  }
+
+  getTopCategory(): CategoryAnalysis | undefined {
+    if (this.analysis().length === 0) return undefined;
+    return this.analysis().reduce((top, current) =>
+        current.amount > top.amount ? current : top,
+      this.analysis()[0]
+    );
   }
 }

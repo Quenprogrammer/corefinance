@@ -1,4 +1,4 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CashbookEntry } from '../../../model/cashbook.model';
 
@@ -6,6 +6,228 @@ import { CashbookEntry } from '../../../model/cashbook.model';
   selector: 'app-cashbook-table',
   standalone: true,
   imports: [CommonModule],
+  styles: [`
+    .cashbook-wrapper {
+      margin: 1rem 0;
+    }
+
+    .cashbook-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 1rem 1.5rem;
+      background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .header-left i {
+      font-size: 1.25rem;
+      color: #3b82f6;
+    }
+
+    .card-title {
+      margin: 0;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .btn-export {
+      padding: 0.5rem 1rem;
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .btn-export:hover {
+      background: #059669;
+      transform: translateY(-1px);
+    }
+
+    .badge-count {
+      padding: 0.25rem 0.75rem;
+      background: #e2e8f0;
+      border-radius: 2rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .table-container {
+      overflow-x: auto;
+    }
+
+    .table-responsive-wrapper {
+      overflow-x: auto;
+    }
+
+    .cashbook-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    .cashbook-table th,
+    .cashbook-table td {
+      padding: 0.75rem 1rem;
+      border: 1px solid #e2e8f0;
+      vertical-align: middle;
+    }
+
+    .category-headers th {
+      padding: 0.5rem;
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    .receipt-category {
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      color: #059669;
+    }
+
+    .payment-category {
+      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+      color: #dc2626;
+    }
+
+    .category-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .column-headers th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .receipt-amount {
+      color: #059669;
+      font-weight: 600;
+    }
+
+    .payment-amount {
+      color: #dc2626;
+      font-weight: 600;
+    }
+
+    .voucher-number, .dv-number {
+      font-family: monospace;
+      font-weight: 600;
+    }
+
+    .empty-cell {
+      color: #cbd5e1;
+      text-align: center;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem !important;
+    }
+
+    .empty-message i {
+      font-size: 3rem;
+      color: #cbd5e1;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .empty-message p {
+      margin: 0;
+      color: #64748b;
+    }
+
+    .empty-message small {
+      color: #94a3b8;
+    }
+
+    .summary-row {
+      background: #f8fafc;
+      border-top: 2px solid #e2e8f0;
+    }
+
+    .summary-label {
+      text-align: right;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .summary-amount {
+      text-align: right;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .total-receipts {
+      color: #059669;
+    }
+
+    .total-payments {
+      color: #dc2626;
+    }
+
+    .positive {
+      color: #059669;
+    }
+
+    .negative {
+      color: #dc2626;
+    }
+
+    /* Hover Effects */
+    .cashbook-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .cashbook-table th,
+      .cashbook-table td {
+        padding: 0.5rem;
+        font-size: 0.75rem;
+      }
+
+      .btn-export {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+      }
+    }
+  `],
   template: `
     <div class="cashbook-wrapper">
       <div class="cashbook-card">
@@ -15,6 +237,9 @@ import { CashbookEntry } from '../../../model/cashbook.model';
             <h5 class="card-title">Cashbook Transactions</h5>
           </div>
           <div class="header-right">
+            <button class="btn-export" (click)="exportToExcel()" title="Export to Excel">
+              <i class="bi bi-file-excel"></i> Export Excel
+            </button>
             <span class="badge-count">{{ entries().length }} Transactions</span>
           </div>
         </div>
@@ -37,7 +262,7 @@ import { CashbookEntry } from '../../../model/cashbook.model';
                     PAYMENTS
                   </div>
                 </th>
-                    </tr>
+              </tr>
               <!-- Column Headers -->
               <tr class="column-headers">
                 <th>Date</th>
@@ -56,452 +281,82 @@ import { CashbookEntry } from '../../../model/cashbook.model';
               </tr>
               </thead>
               <tbody>
-              <tr *ngFor="let entry of entries(); trackBy: trackById"
-                  [class.receipt-transaction]="entry.transactionType === 'receipt'"
-                  [class.payment-transaction]="entry.transactionType === 'payment'">
+                @for (entry of entries(); track trackById($index, entry)) {
+                  <tr [class.receipt-transaction]="entry.transactionType === 'receipt'"
+                      [class.payment-transaction]="entry.transactionType === 'payment'">
 
-                <!-- Receipt Fields -->
-                <td *ngIf="entry.transactionType === 'receipt'" class="date-col">
-                  {{ entry.date | date:'dd/MM/yyyy' }}
-                </td>
-                <td *ngIf="entry.transactionType === 'payment'" class="empty-cell">-</td>
+                    <!-- Receipt Fields -->
+                    @if (entry.transactionType === 'receipt') {
+                      <td class="date-col">{{ entry.date | date:'dd/MM/yyyy' }}</td>
+                      <td class="voucher-col"><span class="voucher-number">{{ entry.voucherNumber }}</span></td>
+                      <td class="party-col">{{ entry.receivedFrom }}</td>
+                      <td class="desc-col">{{ entry.description }}</td>
+                      <td class="ncoa-col"><code>{{ entry.ncoaCode }}</code></td>
+                      <td class="amount-col receipt-amount">{{ entry.amount | number:'1.2-2' }}</td>
+                    } @else {
+                      <td class="empty-cell">-</td>
+                      <td class="empty-cell">-</td>
+                      <td class="empty-cell">-</td>
+                      <td class="empty-cell">-</td>
+                      <td class="empty-cell">-</td>
+                      <td class="empty-cell">-</td>
+                    }
 
-                <td *ngIf="entry.transactionType === 'receipt'" class="voucher-col">
-                  <span class="voucher-number">{{ entry.voucherNumber }}</span>
-                </td>
-                <td *ngIf="entry.transactionType === 'payment'" class="empty-cell">-</td>
-
-                <td *ngIf="entry.transactionType === 'receipt'" class="party-col">
-                  {{ entry.receivedFrom }}
-                </td>
-                <td *ngIf="entry.transactionType === 'payment'" class="empty-cell">-</td>
-
-                <td *ngIf="entry.transactionType === 'receipt'" class="desc-col">
-                  {{ entry.description }}
-                </td>
-                <td *ngIf="entry.transactionType === 'payment'" class="empty-cell">-</td>
-
-                <td *ngIf="entry.transactionType === 'receipt'" class="ncoa-col">
-                  <code>{{ entry.ncoaCode }}</code>
-                </td>
-                <td *ngIf="entry.transactionType === 'payment'" class="empty-cell">-</td>
-
-                <td *ngIf="entry.transactionType === 'receipt'" class="amount-col receipt-amount">
-                  {{ entry.amount | number:'1.2-2' }}
-                </td>
-                <td *ngIf="entry.transactionType === 'payment'" class="empty-cell">-</td>
-
-                <!-- Payment Fields -->
-                <td *ngIf="entry.transactionType === 'payment'" class="date-col">
-                  {{ entry.date | date:'dd/MM/yyyy' }}
-                </td>
-                <td *ngIf="entry.transactionType === 'receipt'" class="empty-cell">-</td>
-
-                <td *ngIf="entry.transactionType === 'payment'" class="voucher-col">
-                  <span class="voucher-number">{{ entry.voucherNumber }}</span>
-                </td>
-                <td *ngIf="entry.transactionType === 'receipt'" class="empty-cell">-</td>
-
-                <td *ngIf="entry.transactionType === 'payment'" class="dv-col">
-                  <span class="dv-number">{{ entry.dvNumber }}</span>
-                </td>
-                <td *ngIf="entry.transactionType === 'receipt'" class="empty-cell">-</td>
-
-                <td *ngIf="entry.transactionType === 'payment'" class="party-col">
-                  {{ entry.paidTo }}
-                </td>
-                <td *ngIf="entry.transactionType === 'receipt'" class="empty-cell">-</td>
-
-                <td *ngIf="entry.transactionType === 'payment'" class="desc-col">
-                  {{ entry.description }}
-                </td>
-                <td *ngIf="entry.transactionType === 'receipt'" class="empty-cell">-</td>
-
-                <td *ngIf="entry.transactionType === 'payment'" class="amount-col payment-amount">
-                  {{ entry.amount | number:'1.2-2' }}
-                </td>
-                <td *ngIf="entry.transactionType === 'receipt'" class="empty-cell">-</td>
-
-              </tr>
+                    <!-- Payment Fields -->
+                    @if (entry.transactionType === 'payment') {
+                      <td class="date-col">{{ entry.date | date:'dd/MM/yyyy' }}</td>
+                      <td class="voucher-col"><span class="voucher-number">{{ entry.voucherNumber }}</span></td>
+                      <td class="dv-col"><span class="dv-number">{{ entry.dvNumber }}</span></td>
+                      <td class="party-col">{{ entry.paidTo }}</td>
+                      <td class="desc-col">{{ entry.description }}</td>
+                      <td class="amount-col payment-amount">{{ entry.amount | number:'1.2-2' }}</td>
+                    } @else {
+                      <td class="empty-cell">-</td>
+                      <td class="empty-cell">-</td>
+                      <td class="empty-cell">-</td>
+                      <td class="empty-cell">-</td>
+                      <td class="empty-cell">-</td>
+                      <td class="empty-cell">-</td>
+                    }
+                  </tr>
+                }
 
               <!-- Empty State -->
-              <tr *ngIf="entries().length === 0">
-                <td colspan="14" class="empty-state">
-                  <div class="empty-message">
-                    <i class="bi bi-database-slash"></i>
-                    <p>No transactions found</p>
-                    <small>Click "Add Entry" to get started</small>
-                  </div>
-                </td>
-              </tr>
+                @if (entries().length === 0) {
+                  <tr>
+                    <td colspan="14" class="empty-state">
+                      <div class="empty-message">
+                        <i class="bi bi-database-slash"></i>
+                        <p>No transactions found</p>
+                        <small>Click "Add Entry" to get started</small>
+                      </div>
+                    </td>
+                  </tr>
+                }
               </tbody>
+              @if (entries().length > 0) {
+                <tfoot>
+                <tr class="summary-row">
+                  <td colspan="5" class="summary-label">Total Receipts</td>
+                  <td class="summary-amount total-receipts">{{ getTotalReceipts() | number:'1.2-2' }}</td>
+                  <td colspan="5" class="summary-label">Total Payments</td>
+                  <td class="summary-amount total-payments">{{ getTotalPayments() | number:'1.2-2' }}</td>
+                </tr>
+                <tr class="summary-row">
+                  <td colspan="11" class="summary-label">Net Balance</td>
+                  <td class="summary-amount" [class.positive]="getNetBalance() >= 0" [class.negative]="getNetBalance() < 0">
+                    {{ getNetBalance() | number:'1.2-2' }}
+                  </td>
+                </tr>
+                </tfoot>
+              }
             </table>
           </div>
         </div>
       </div>
     </div>
   `,
-  styles: [`
-    .cashbook-wrapper {
-      background: #1e1e2e;
-      padding: 1.5rem;
-    }
 
-    .cashbook-card {
-      background: white;
-      border-radius: 0.75rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      overflow: hidden;
-    }
-
-    /* Header Styles */
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem 1.5rem;
-      background: white;
-      border-bottom: 1px solid #e5e7eb;
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .header-left i {
-      font-size: 1.25rem;
-      color: #3b82f6;
-    }
-
-    .card-title {
-      margin: 0;
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: #111827;
-    }
-
-    .badge-count {
-      background: #2a2a3a;
-      color: #3b82f6;
-      padding: 0.25rem 0.75rem;
-      border-radius: 2rem;
-      font-size: 0.75rem;
-      font-weight: 500;
-    }
-
-    /* Table Container - Scrollable body only */
-    .table-container {
-      position: relative;
-      overflow: hidden;
-    }
-
-    .table-responsive-wrapper {
-      overflow-x: auto;
-      overflow-y: auto;
-      max-height: 65vh;
-    }
-
-    .cashbook-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.8125rem;
-      min-width: 1200px;
-    }
-
-    /* Table Header */
-    .cashbook-table thead {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      background: white;
-    }
-
-    .category-headers th {
-      padding: 0.75rem 1rem;
-      font-weight: 600;
-      font-size: 0.75rem;
-      letter-spacing: 0.5px;
-      border-bottom: 1px solid #e5e7eb;
-    }
-
-    .receipt-category {
-      background: #f0fdf4;
-      color: #166534;
-    }
-
-    .payment-category {
-      background: #fef2f2;
-      color: #991b1b;
-    }
-
-    .balance-category {
-      background: #f3f4f6;
-      color: #374151;
-      text-align: center;
-    }
-
-    .actions-category {
-      background: #f3f4f6;
-      color: #374151;
-      text-align: center;
-    }
-
-    .category-label {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-    }
-
-    .category-label i {
-      font-size: 1rem;
-    }
-
-    .column-headers th {
-      padding: 0.75rem 1rem;
-      background: #f9fafb;
-      font-weight: 600;
-      color: #4b5563;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      border-bottom: 1px solid #e5e7eb;
-    }
-
-    /* Table Body */
-    .cashbook-table tbody tr {
-      border-bottom: 1px solid #f3f4f6;
-      transition: background-color 0.2s;
-    }
-
-    .cashbook-table tbody tr:hover {
-      background-color: #f9fafb;
-    }
-
-    .receipt-transaction:hover {
-      background-color: #f0fdf4;
-    }
-
-    .payment-transaction:hover {
-      background-color: #fef2f2;
-    }
-
-    .cashbook-table td {
-      padding: 0.75rem 1rem;
-      color: #1f2937;
-      vertical-align: middle;
-    }
-
-    .empty-cell {
-      color: #9ca3af;
-      text-align: center;
-      font-size: 0.75rem;
-    }
-
-    /* Column Specific Styles */
-    .date-col {
-      font-weight: 500;
-      color: #374151;
-    }
-
-    .voucher-col .voucher-number {
-      font-family: monospace;
-      font-weight: 500;
-      color: #3b82f6;
-    }
-
-    .dv-col .dv-number {
-      font-family: monospace;
-      font-weight: 500;
-      color: #f59e0b;
-    }
-
-    .party-col {
-      font-weight: 500;
-      color: #111827;
-    }
-
-    .desc-col {
-      color: #6b7280;
-      max-width: 200px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .ncoa-col code {
-      background: #f3f4f6;
-      padding: 0.25rem 0.5rem;
-      border-radius: 0.25rem;
-      font-size: 0.6875rem;
-      color: #059669;
-    }
-
-    .amount-col {
-      text-align: right;
-      font-weight: 600;
-      font-family: 'Courier New', monospace;
-    }
-
-    .receipt-amount {
-      color: #059669;
-    }
-
-    .payment-amount {
-      color: #dc2626;
-    }
-
-    .balance-col {
-      text-align: right;
-      background-color: #fefce8;
-      font-weight: 600;
-      color: #854d0e;
-    }
-
-    /* Action Buttons */
-    .actions-col {
-      text-align: center;
-      white-space: nowrap;
-    }
-
-    .icon-btn {
-      background: none;
-      border: none;
-      padding: 0.375rem;
-      margin: 0 0.125rem;
-      border-radius: 0.375rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      width: 28px;
-      height: 28px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .edit-btn {
-      background: #fef3c7;
-      color: #d97706;
-    }
-
-    .edit-btn:hover {
-      background: #f59e0b;
-      color: white;
-      transform: scale(1.05);
-    }
-
-    .delete-btn {
-      background: #fee2e2;
-      color: #dc2626;
-    }
-
-    .delete-btn:hover {
-      background: #dc2626;
-      color: white;
-      transform: scale(1.05);
-    }
-
-    .icon-btn i {
-      font-size: 0.875rem;
-    }
-
-    /* Empty State */
-    .empty-state {
-      text-align: center;
-      padding: 3rem !important;
-      background: #ffffff;
-    }
-
-    .empty-message {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .empty-message i {
-      font-size: 2.5rem;
-      color: #d1d5db;
-    }
-
-    .empty-message p {
-      margin: 0;
-      font-weight: 500;
-      color: #6b7280;
-    }
-
-    .empty-message small {
-      color: #9ca3af;
-      font-size: 0.75rem;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      .cashbook-wrapper {
-        padding: 1rem;
-      }
-
-      .card-header {
-        padding: 0.875rem 1rem;
-      }
-
-      .card-title {
-        font-size: 1rem;
-      }
-
-      .cashbook-table td,
-      .cashbook-table th {
-        padding: 0.625rem 0.75rem;
-      }
-    }
-
-    /* Print Styles */
-    @media print {
-      .cashbook-wrapper {
-        background: white;
-        padding: 0;
-      }
-
-      .cashbook-card {
-        box-shadow: none;
-      }
-
-      .no-print {
-        display: none;
-      }
-
-      .icon-btn {
-        display: none;
-      }
-
-      .table-responsive-wrapper {
-        overflow: visible;
-        max-height: none;
-      }
-    }
-
-    /* Custom Scrollbar */
-    .table-responsive-wrapper::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-
-    .table-responsive-wrapper::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 4px;
-    }
-
-    .table-responsive-wrapper::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 4px;
-    }
-
-    .table-responsive-wrapper::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
-    }
-  `]
 })
 export class CashbookTableComponent {
   entries = input.required<CashbookEntry[]>();
@@ -510,5 +365,123 @@ export class CashbookTableComponent {
 
   trackById(index: number, entry: CashbookEntry): string {
     return entry.id!;
+  }
+
+  getTotalReceipts(): number {
+    return this.entries()
+      .filter(e => e.transactionType === 'receipt')
+      .reduce((sum, e) => sum + e.amount, 0);
+  }
+
+  getTotalPayments(): number {
+    return this.entries()
+      .filter(e => e.transactionType === 'payment')
+      .reduce((sum, e) => sum + e.amount, 0);
+  }
+
+  getNetBalance(): number {
+    return this.getTotalReceipts() - this.getTotalPayments();
+  }
+
+  // ============ EXPORT TO EXCEL FUNCTION ============
+
+  exportToExcel(): void {
+    const entries = this.entries();
+
+    if (entries.length === 0) {
+      alert('No data to export');
+      return;
+    }
+
+    // Prepare data for Excel
+    const excelData: any[][] = [];
+
+    // Add Header
+    excelData.push(['CASHBOOK TRANSACTIONS REPORT', '', '', '', '', '', '', '', '', '', '', '']);
+    excelData.push([`Generated: ${new Date().toLocaleString()}`, '', '', '', '', '', '', '', '', '', '', '']);
+    excelData.push([`Total Transactions: ${entries.length}`, '', '', '', '', '', '', '', '', '', '', '']);
+    excelData.push([]);
+
+    // Add Summary
+    excelData.push(['SUMMARY', '', '', '', '', '', '', '', '', '', '', '']);
+    excelData.push(['Total Receipts', this.getTotalReceipts(), '', '', '', '', 'Total Payments', this.getTotalPayments(), '', '', '', '']);
+    excelData.push(['Net Balance', this.getNetBalance(), '', '', '', '', '', '', '', '', '', '']);
+    excelData.push([]);
+
+    // Table Headers
+    excelData.push([
+      'RECEIPTS', '', '', '', '', '', 'PAYMENTS', '', '', '', '', ''
+    ]);
+
+    excelData.push([
+      'Date', 'Voucher No', 'From/Received', 'Description', 'NCOA', 'Amount',
+      'Date', 'Voucher No', 'DV No', 'To/Paid', 'Description', 'Amount'
+    ]);
+
+    // Table Data
+    entries.forEach(entry => {
+      if (entry.transactionType === 'receipt') {
+        excelData.push([
+          new Date(entry.date).toLocaleDateString(),
+          entry.voucherNumber,
+          entry.receivedFrom || '',
+          entry.description,
+          entry.ncoaCode,
+          entry.amount,
+          '', '', '', '', '', ''
+        ]);
+      } else {
+        excelData.push([
+          '', '', '', '', '', '',
+          new Date(entry.date).toLocaleDateString(),
+          entry.voucherNumber,
+          entry.dvNumber || '',
+          entry.paidTo || '',
+          entry.description,
+          entry.amount
+        ]);
+      }
+    });
+
+    // Add totals row
+    excelData.push([]);
+    excelData.push([
+      'TOTAL RECEIPTS', '', '', '', '', this.getTotalReceipts(),
+      'TOTAL PAYMENTS', '', '', '', '', this.getTotalPayments()
+    ]);
+
+    // Convert to CSV
+    const csvContent = this.convertToCSV(excelData);
+
+    // Download file
+    this.downloadCSV(csvContent, `cashbook_export_${new Date().toISOString().split('T')[0]}.csv`);
+  }
+
+  private convertToCSV(data: any[][]): string {
+    return data.map(row =>
+      row.map(cell => {
+        if (cell === undefined || cell === null) return '';
+        if (typeof cell === 'string' && (cell.includes(',') || cell.includes('"'))) {
+          return `"${cell.replace(/"/g, '""')}"`;
+        }
+        return cell;
+      }).join(',')
+    ).join('\n');
+  }
+
+  private downloadCSV(csvContent: string, filename: string): void {
+    // Add BOM for UTF-8 to handle special characters
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 }

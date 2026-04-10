@@ -436,5 +436,24 @@ export class CashbookService {
 
 
 
+// Add this method to your CashbookService class
+  getEntriesByYear(year: number): Observable<CashbookEntry[]> {
+    return new Observable<CashbookEntry[]>((observer) => {
+      const entries = this.entriesSignal();
+      const filtered = entries.filter((e: CashbookEntry) => e.year === year);
+      observer.next(filtered);
+      observer.complete();
+    });
+  }
+  // Add this method to get entries by year and month
+  getEntriesByYearAndMonth(year: number, month: number): Observable<CashbookEntry[]> {
+    return new Observable<CashbookEntry[]>((observer) => {
+      const entries = this.entriesSignal();
+      const filtered = entries.filter((e: CashbookEntry) => e.year === year && e.month === month);
+      observer.next(filtered);
+      observer.complete();
+    });
+  }
+
 
 }

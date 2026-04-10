@@ -16,7 +16,7 @@
   <div class="mobile-tabs-header">
     <div class="mobile-tab-selector" (click)="toggleMobileMenu()">
       <i [class]="tabs[activeTab()]?.icon"></i>
-      <span>{{ tabs[activeTab()]?.label }}</span>
+      <span>MENU</span>
       <i class="bi bi-chevron-down" [class.rotated]="mobileMenuOpen()"></i>
     </div>
     <div class="mobile-tabs-dropdown" *ngIf="mobileMenuOpen()">
@@ -35,8 +35,8 @@
   <!-- Tab Content -->
   <div class="tabs-content">
     <div class="tab-pane" *ngIf="activeTab() === 0">
-      <div class="container-fluid py-4">
-        <!-- Modern Header with Actions -->
+<!--      <div class="container-fluid py-4">
+        &lt;!&ndash; Modern Header with Actions &ndash;&gt;
         <div class="dashboard-header">
           <div class="header-content-wrapper">
             <div class="title-section">
@@ -72,7 +72,7 @@
             </div>
           </div>
         </div>
-        <div class="filters-modern-card">
+      &lt;!&ndash;  <div class="filters-modern-card">
           <div class="filters-header-modern">
             <div class="filters-title">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -161,18 +161,18 @@
               </select>
             </div>
           </div>
-        </div>
+        </div>&ndash;&gt;
 
-        <!-- Modern Filters Card -->
+        &lt;!&ndash; Modern Filters Card &ndash;&gt;
 
 
-        <!-- Stats Dashboard -->
+        &lt;!&ndash; Stats Dashboard &ndash;&gt;
         <app-dashboard-stats [stats]="stats()"></app-dashboard-stats>
 
-        <!-- Loading Spinner -->
+        &lt;!&ndash; Loading Spinner &ndash;&gt;
         <app-loading-spinner *ngIf="loading()"></app-loading-spinner>
 
-        <!-- Error Alert -->
+        &lt;!&ndash; Error Alert &ndash;&gt;
         <div *ngIf="error()" class="alert alert-danger alert-dismissible fade show" role="alert">
           {{error()}}
           <button type="button" class="btn-close" (click)="clearError()"></button>
@@ -183,17 +183,20 @@
 
 
 
-        <!-- Reports Section -->
+        &lt;!&ndash; Reports Section &ndash;&gt;
         <div class="row mt-4">
           <div class="col-12 mb-4">
 
           </div>
-
         </div>
-      </div>
+      </div>-->
+      <app-cashbook-entry-form
+        (entryAdded)="onEntryAdded()">
+      </app-cashbook-entry-form>
     </div>
 
     <div class="tab-pane" *ngIf="activeTab() === 1">
+      <app-transaction-chart ></app-transaction-chart>
       <app-cashbook-table
         [entries]="filteredEntries()"
         (deleteEntry)="onEntryDeleted($event)"
@@ -202,10 +205,26 @@
     </div>
 
     <div class="tab-pane" *ngIf="activeTab() === 2">
-      <!-- Entry Form -->
-      <app-cashbook-entry-form
-        (entryAdded)="onEntryAdded()">
-      </app-cashbook-entry-form>
+      <div class="row mt-4">
+        <div class="col-12">
+          <app-category-transactions-detail
+            [transactionType]="'receipt'"
+            [title]="'Receipt Categories - All Transactions'"
+            [year]="selectedYear">
+          </app-category-transactions-detail>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-12">
+          <app-category-transactions-detail
+            [transactionType]="'payment'"
+            [title]="'Payment Categories - All Transactions'"
+            [year]="selectedYear">
+          </app-category-transactions-detail>
+        </div>
+      </div>
+
     </div>
 
     <div class="tab-pane" *ngIf="activeTab() === 3">
@@ -225,6 +244,38 @@
           </app-category-analysis>
 
       </div>
+    <div class="tab-pane" *ngIf="activeTab() === 5">
+
+
+
+      <!-- NEW: Category Monthly Breakdown Section -->
+      <div class="row mt-4">
+        <div class="col-12">
+          <app-category-monthly-breakdown
+            [transactionType]="'receipt'"
+            [title]="'Revenue Categories - Monthly Breakdown'"
+            [year]="selectedYear">
+          </app-category-monthly-breakdown>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-12">
+          <app-category-monthly-breakdown
+            [transactionType]="'payment'"
+            [title]="'Expense Categories - Monthly Breakdown'"
+            [year]="selectedYear">
+          </app-category-monthly-breakdown>
+        </div>
+      </div>
+
+
+
+      <!-- Add after your existing components -->
+
+      <!-- Category Transactions Detail Section -->
+
+    </div>
     </div>
   </div>
 

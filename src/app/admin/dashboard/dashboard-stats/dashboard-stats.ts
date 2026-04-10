@@ -1,12 +1,13 @@
-import { Component, input } from '@angular/core';
+import { Component, input, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DashboardStats } from '../../../core/model/cashbook.model';
-import {TransactionChartComponent} from '../../transaction-chart/transaction-chart';
+import { TransactionChartComponent } from '../../transaction-chart/transaction-chart';
+import {RouterLink} from '@angular/router';
 
 @Component({
   selector: 'app-dashboard-stats',
   standalone: true,
-  imports: [CommonModule, TransactionChartComponent],
+  imports: [CommonModule, TransactionChartComponent, RouterLink],
   template: `
     <div class="dashboard-container">
       <div class="stats-grid">
@@ -84,9 +85,7 @@ import {TransactionChartComponent} from '../../transaction-chart/transaction-cha
             <div class="stat-header">
               <div class="stat-icon-wrapper">
                 <div class="stat-icon balance-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z" fill="currentColor"/>
-                  </svg>
+                  ₦
                 </div>
               </div>
               <div class="stat-trend neutral">
@@ -111,44 +110,10 @@ import {TransactionChartComponent} from '../../transaction-chart/transaction-cha
           </div>
           <div class="card-shine"></div>
         </div>
-
-        <!-- Average Transaction Card -->
-        <div class="stat-card average-card">
-          <div class="stat-card-inner">
-            <div class="stat-header">
-              <div class="stat-icon-wrapper">
-                <div class="stat-icon average-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" fill="currentColor"/>
-                  </svg>
-                </div>
-              </div>
-              <div class="stat-trend positive">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z" fill="currentColor"/>
-                </svg>
-                <span>+5.2%</span>
-              </div>
-            </div>
-            <div class="stat-content">
-              <h3 class="stat-value">₦{{stats().averageTransaction | number:'1.2-2'}}</h3>
-              <p class="stat-label">Average Transaction</p>
-              <div class="stat-meta">
-                <span class="stat-badge">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                    <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" fill="currentColor"/>
-                  </svg>
-                  All transactions
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="card-shine"></div>
-        </div>
       </div>
 
       <!-- Chart Section -->
-      <div class="chart-container">
+      <div class="chart-container" #chartContainer>
         <div class="chart-header">
           <h3 class="chart-title">Transaction Overview</h3>
           <div class="chart-legend">
@@ -163,8 +128,25 @@ import {TransactionChartComponent} from '../../transaction-chart/transaction-cha
           </div>
         </div>
         <div class="chart-wrapper">
-<app-transaction-chart></app-transaction-chart>
-         </div>
+          <div class="container py-4">
+            <div class="row g-4">
+              @for (item of menu; track item.icon) {
+                <div class="col-6 col-md-4 col-lg-3">
+                  <div class="card h-100 menu-card" [routerLink]="item.link">
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center text-center">
+                      <!-- Centered Image with responsive sizing and graceful fallback -->
+                      <div class="img-wrapper mb-3">
+                        <img [src]="item.icon" alt="{{ item.name }}" class="menu-img" loading="lazy">
+                      </div>
+                      <!-- Centered Title / Text -->
+                      <h6 class="card-title mb-0">{{ item.name }}</h6>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   `,
@@ -265,6 +247,8 @@ import {TransactionChartComponent} from '../../transaction-chart/transaction-cha
     .balance-icon {
       background: linear-gradient(135deg, #51cf6615 0%, #51cf6625 100%);
       color: #51cf66;
+      font-size: 20px;
+      font-weight: bold;
     }
 
     .average-icon {
@@ -421,7 +405,7 @@ import {TransactionChartComponent} from '../../transaction-chart/transaction-cha
       padding: 16px;
     }
 
-    /* Animation for initial load */
+    /* Animation for initial load - FIXED to not hide the chart */
     @keyframes fadeInUp {
       from {
         opacity: 0;
@@ -443,10 +427,11 @@ import {TransactionChartComponent} from '../../transaction-chart/transaction-cha
     .stat-card:nth-child(3) { animation-delay: 0.15s; }
     .stat-card:nth-child(4) { animation-delay: 0.2s; }
 
+    /* Chart container starts visible but with fade animation */
     .chart-container {
       animation: fadeInUp 0.5s ease-out forwards;
       animation-delay: 0.25s;
-      opacity: 0;
+      opacity: 1; /* Changed from 0 to 1 */
     }
 
     /* Responsive Design */
@@ -491,21 +476,6 @@ import {TransactionChartComponent} from '../../transaction-chart/transaction-cha
       }
     }
 
-    /* Loading State */
-    .loading .stat-value {
-      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-      background-size: 200% 100%;
-      animation: loading 1.5s infinite;
-      border-radius: 6px;
-      color: transparent;
-      width: 70%;
-    }
-
-    @keyframes loading {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-
     /* Dark Mode Support */
     @media (prefers-color-scheme: dark) {
       .stat-card {
@@ -516,18 +486,9 @@ import {TransactionChartComponent} from '../../transaction-chart/transaction-cha
         background: #1f2937;
       }
 
-      .receipt-card {
-        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-      }
-
-      .payment-card {
-        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-      }
-
-      .balance-card {
-        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-      }
-
+      .receipt-card,
+      .payment-card,
+      .balance-card,
       .average-card {
         background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
       }
@@ -557,8 +518,152 @@ import {TransactionChartComponent} from '../../transaction-chart/transaction-cha
         background: #111827;
       }
     }
+
+    /* ========== GLOBAL / COMPONENT STYLES ========== */
+    /* Ensures consistent box-sizing and smooth rendering */
+    .menu-card {
+      transition: transform 0.25s ease, box-shadow 0.3s ease;
+      border: none;
+      border-radius: 1.25rem;
+      background:#1f2937;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.02);
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    /* Interactive hover effect: subtle lift + deeper shadow */
+    .menu-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Card body: flex column centering both horizontally and vertically */
+    .menu-card .card-body {
+      padding: 1.75rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 180px;
+      background: #1f2937;
+      border-radius: 1.25rem;
+    }
+
+    /* Image wrapper for consistent sizing and centering */
+    .img-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+    }
+
+    /* Image styling: fixed width with max-width for responsiveness, maintain aspect ratio */
+    .menu-img {
+      width: 100px;
+      max-width: 80%;
+      height: auto;
+      object-fit: contain;
+      transition: transform 0.2s ease;
+      display: block;
+      margin: 0 auto;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.05));
+    }
+
+    /* Slight image zoom on card hover for extra liveliness */
+    .menu-card:hover .menu-img {
+      transform: scale(1.02);
+    }
+
+    /* Title / Text styling: centered, modern typography */
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: white;
+      margin-top: 0.5rem;
+      margin-bottom: 0;
+      line-height: 1.4;
+      transition: color 0.2s;
+      word-break: break-word;
+      max-width: 100%;
+    }
+
+    /* On hover, text gets slightly richer color */
+    .menu-card:hover .card-title {
+      color: #0f172a;
+    }
+
+    /* Additional responsive tweaks: for very small devices (<=480px) adjust image size and padding */
+    @media (max-width: 576px) {
+      .menu-img {
+        width: 70px;
+      }
+      .menu-card .card-body {
+        padding: 1.25rem 0.75rem;
+        min-height: 150px;
+      }
+      .card-title {
+        font-size: 0.85rem;
+      }
+    }
+
+    /* For medium screens where grid looks neat, keep image width balanced */
+    @media (min-width: 768px) and (max-width: 991px) {
+      .menu-img {
+        width: 90px;
+      }
+    }
+
+    /* Optional: active/tap effect for mobile */
+    .menu-card:active {
+      transform: translateY(-2px);
+      transition: transform 0.05s;
+    }
+
   `]
 })
-export class DashboardStatsComponent {
+export class DashboardStatsComponent implements AfterViewInit {
   stats = input.required<DashboardStats>();
+  isChartVisible = false;
+
+  @ViewChild('chartContainer') chartContainer!: ElementRef;
+
+  ngAfterViewInit() {
+    // Use Intersection Observer to detect when chart container is visible
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !this.isChartVisible) {
+          // Small delay to ensure container is fully rendered
+          setTimeout(() => {
+            this.isChartVisible = true;
+          }, 100);
+          observer.disconnect(); // Stop observing once chart is loaded
+        }
+      });
+    }, { threshold: 0.1 });
+
+    observer.observe(this.chartContainer.nativeElement);
+  }
+
+  menu=[
+    {icon:"cashbook/1.png", name:"Add Transaction", link:"/add-transactions"},
+    {icon:"cashbook/4.png", name:"Cashbook", link:"/admin"},
+
+    {icon:"cashbook/3.png", name:"Payment Categories", link:"/ledger2"},
+
+
+    {icon:"cashbook/6.png", name:"Receipt Categories", link:"/ledger"},
+
+
+
+    {icon:"cashbook/11.png", name:"Transactions",link:"/transactions" },
+
+
+    {icon:"cashbook/14.svg", name:"Monthly Analysis", link:"/monthly-transactions-details"},
+    {icon:"cashbook/8.png", name:"Payment Transactions", link:"/payments-categories"},
+    {icon:"cashbook/9.png", name:"Receipt Transactions", link:"/receipts-categories"},
+    {icon:"cashbook/13.svg", name:"Export To Excel", link:"/exportData"},
+    {icon:"cashbook/12.png", name:"Report A problem" , link:"/complain"},
+  ]
 }

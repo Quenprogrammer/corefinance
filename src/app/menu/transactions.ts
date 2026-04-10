@@ -1,38 +1,31 @@
-import {Component, HostListener, inject, OnInit, signal} from '@angular/core'; // Add OnInit
-import {CashbookService} from '../../core/services/cashbook.service';
-import {FilterCriteria, PaymentCategory, ReceiptCategory, TransactionType, CashbookEntry} from '../../core/model/cashbook.model'; // Add CashbookEntry
-import {FormsModule} from '@angular/forms';
-import {NgForOf, NgIf} from '@angular/common';
-import {CategoryAnalysisComponent} from '../category-analysis/category-analysis';
-import {MonthlyReportComponent} from '../monthly-report/monthly-report';
-import {CashbookEntryFormComponent} from '../cashbook-entry-form/cashbook-entry-form';
-import {LoadingSpinnerComponent} from '../../core/shared/components/loading-spinner/loading-spinner';
-import {DashboardStatsComponent} from './dashboard-stats/dashboard-stats';
-import {CashbookTableComponent} from '../../core/shared/components/cashbook-table/cashbook-table';
-import {CategoryMonthlyBreakdownComponent} from '../category-monthly-breakdown/category-monthly-breakdown';
-import {TransactionChartComponent} from '../transaction-chart/transaction-chart';
-import {CategoryTransactionsDetailComponent} from '../category-transactions-detail/category-transactions-detail';
+import {Component, HostListener, inject, signal} from '@angular/core';
+import {CashbookService} from '../core/services/cashbook.service';
+import {
+  CashbookEntry,
+  FilterCriteria,
+  PaymentCategory,
+  ReceiptCategory,
+  TransactionType
+} from '../core/model/cashbook.model';
+import {CashbookTableComponent} from '../core/shared/components/cashbook-table/cashbook-table';
 
 @Component({
-  selector: 'app-dashboard',
+  selector: 'app-transactions',
   imports: [
-    FormsModule,
-    NgForOf,
-    NgIf,
-    CategoryAnalysisComponent,
-    MonthlyReportComponent,
-    CashbookEntryFormComponent,
-    LoadingSpinnerComponent,
-    DashboardStatsComponent,
-    CashbookTableComponent,
-    CategoryMonthlyBreakdownComponent,
-    TransactionChartComponent,
-    CategoryTransactionsDetailComponent
+    CashbookTableComponent
   ],
-  templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss',
+  template: `
+    <app-cashbook-table
+      [entries]="filteredEntries()"
+      (deleteEntry)="onEntryDeleted($event)"
+      (editEntry)="onEntryUpdated($event)">
+    </app-cashbook-table>
+  `,
+  styles: [`
+
+  `]
 })
-export class Dashboard implements OnInit { // Add implements OnInit
+export class Transactions {
   private cashbookService = inject(CashbookService);
 
   // State
@@ -46,13 +39,8 @@ export class Dashboard implements OnInit { // Add implements OnInit
   years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
   months = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
-  receiptCategories: ReceiptCategory[] = [
-    'Tax Revenue', 'Fees & Charges', 'Licenses', 'Fines & Penalties', 'Grants & Aids', 'Other Receipts'
-  ];
-  paymentCategories: PaymentCategory[] = [
-    'Personnel Services', 'Maintenance & Operating', 'Financial Expenses',
-    'Capital Outlay', 'Debt Service', 'Other Payments'
-  ];
+
+
 
   // Signals from service
   loading = this.cashbookService.loading;
@@ -76,18 +64,6 @@ export class Dashboard implements OnInit { // Add implements OnInit
     this.cashbookService.setFilter(filter);
   }
 
-  clearAllFilters() {
-    this.selectedYear = new Date().getFullYear();
-    this.selectedMonth = 0;
-    this.selectedType = 'all';
-    this.searchTerm = '';
-    this.selectedCategory = '';
-    this.cashbookService.clearFilter();
-  }
-
-  onEntryAdded() {
-    this.applyFilters();
-  }
 
   // FIX: Add parameter for entry ID
   onEntryDeleted(entryId: string) {
@@ -165,9 +141,9 @@ export class Dashboard implements OnInit { // Add implements OnInit
     }
   }
   tabs = [
-    { label: 'Add Transactions', icon: 'bi bi-calendar-month', badge: '' },
+    { label: 'Dashboard', icon: 'bi bi-calendar-month', badge: '' },
     { label: 'Transactions', icon: 'bi bi-graph-up', badge: '' },
-    { label: 'Payment Analysis', icon: 'bi bi-pie-chart', badge: '' },
+    { label: 'Add Transactions', icon: 'bi bi-pie-chart', badge: '' },
     { label: 'Monthly Analysis', icon: 'bi bi-calendar-range', badge: '' },
     { label: 'Export & Reports', icon: 'bi bi-download', badge: '' },
     { label: 'Categories by Month', icon: 'bi bi-download', badge: '' }

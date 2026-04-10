@@ -1,5 +1,5 @@
 // transaction-chart.component.ts
-import { Component, input, inject, effect, ViewChild, ElementRef, AfterViewInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, input, inject, effect, ViewChild, ElementRef, AfterViewInit, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
@@ -32,11 +32,30 @@ Chart.register(...registerables);
           </div>
         </div>
 
-        <div class="chart-body">
+        <!-- Loading State -->
+        <div class="chart-body" *ngIf="isLoading">
+          <div class="loading-container">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading chart data...</p>
+          </div>
+        </div>
+
+        <!-- Chart Canvas -->
+        <div class="chart-body" *ngIf="!isLoading">
           <canvas #transactionChartCanvas></canvas>
         </div>
 
-        <div class="chart-footer" *ngIf="summary">
+        <!-- Empty State -->
+        <div class="chart-body" *ngIf="!isLoading && monthlyData.length === 0">
+          <div class="empty-container">
+            <i class="bi bi-bar-chart-line"></i>
+            <p>No data available for {{ selectedYear }}</p>
+          </div>
+        </div>
+
+        <div class="chart-footer" *ngIf="summary && monthlyData.length > 0">
           <div class="summary-item">
             <span class="label">Total Receipts:</span>
             <span class="value positive">{{ summary.totalReceipts | number:'1.2-2' }}</span>
@@ -139,11 +158,31 @@ Chart.register(...registerables);
       padding: 1.5rem;
       position: relative;
       height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     canvas {
       width: 100%;
       height: 100%;
+    }
+
+    .loading-container, .empty-container {
+      text-align: center;
+      color: #64748b;
+    }
+
+    .loading-container .spinner-border {
+      width: 3rem;
+      height: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .empty-container i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      display: block;
     }
 
     .chart-footer {
@@ -200,7 +239,7 @@ Chart.register(...registerables);
     }
   `]
 })
-export class TransactionChartComponent implements AfterViewInit, OnDestroy {
+export class TransactionChartComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('transactionChartCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
 
   private cashbookService = inject(CashbookService);
@@ -210,8 +249,11 @@ export class TransactionChartComponent implements AfterViewInit, OnDestroy {
   currentChartType: 'bar' | 'line' = 'bar';
   monthlyData: MonthlyReport[] = [];
   summary = { totalReceipts: 0, totalPayments: 0, netBalance: 0, bestMonth: '' };
+  isLoading = false;
 
   private chart: Chart | null = null;
+  private isViewInitialized = false;
+  private dataLoaded = false;
 
   constructor() {
     // Generate years (last 3 years and next 2 years)
@@ -219,13 +261,19 @@ export class TransactionChartComponent implements AfterViewInit, OnDestroy {
     for (let i = currentYear - 3; i <= currentYear + 2; i++) {
       this.years.push(i);
     }
+  }
 
-    // Load initial data
+  ngOnInit() {
+    // Load data when component initializes
     this.loadMonthlyData();
   }
 
   ngAfterViewInit() {
-    setTimeout(() => this.createChart(), 100);
+    this.isViewInitialized = true;
+    // If data is already loaded, create chart
+    if (this.dataLoaded && this.monthlyData.length > 0) {
+      this.createChartWithDelay();
+    }
   }
 
   ngOnDestroy() {
@@ -238,14 +286,14 @@ export class TransactionChartComponent implements AfterViewInit, OnDestroy {
   setChartType(type: 'bar' | 'line') {
     if (this.currentChartType === type) return;
     this.currentChartType = type;
-    this.recreateChart();
+    if (this.monthlyData.length > 0) {
+      this.recreateChart();
+    }
   }
 
   onYearChange() {
     this.loadMonthlyData();
   }
-
-
 
   calculateSummary() {
     const totalReceipts = this.monthlyData.reduce((sum, m) => sum + m.receipts, 0);
@@ -273,11 +321,31 @@ export class TransactionChartComponent implements AfterViewInit, OnDestroy {
     this.createChart();
   }
 
+  private createChartWithDelay() {
+    // Small delay to ensure DOM is ready
+    setTimeout(() => {
+      this.createChart();
+    }, 50);
+  }
+
   private createChart() {
-    if (!this.canvasRef || !this.canvasRef.nativeElement || this.monthlyData.length === 0) return;
+    // Check if canvas is available and data exists
+    if (!this.canvasRef || !this.canvasRef.nativeElement || this.monthlyData.length === 0) {
+      console.log('Cannot create chart: canvas or data missing');
+      return;
+    }
 
     const ctx = this.canvasRef.nativeElement.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      console.log('Cannot get canvas context');
+      return;
+    }
+
+    // Destroy existing chart if any
+    if (this.chart) {
+      this.chart.destroy();
+      this.chart = null;
+    }
 
     // Prepare datasets based on chart type
     let datasets: any[] = [];
@@ -411,7 +479,7 @@ export class TransactionChartComponent implements AfterViewInit, OnDestroy {
               },
               font: { size: 10 }
             },
-            grid: { color: '#e2e8f0', }
+            grid: { color: '#e2e8f0' }
           },
           x: {
             ticks: { font: { size: 10 } },
@@ -421,24 +489,36 @@ export class TransactionChartComponent implements AfterViewInit, OnDestroy {
       }
     };
 
-    this.chart = new Chart(ctx, config);
+    try {
+      this.chart = new Chart(ctx, config);
+      console.log('Chart created successfully');
+    } catch (error) {
+      console.error('Error creating chart:', error);
+    }
   }
 
   loadMonthlyData() {
     console.log('Loading data for year:', this.selectedYear);
+    this.isLoading = true;
+    this.dataLoaded = false;
 
     this.cashbookService.getMonthlyReport(this.selectedYear).subscribe({
       next: (data) => {
         console.log('Monthly data received:', data);
-        console.log('Number of months with data:', data.length);
-        console.log('Sample data:', data[0]);
-
         this.monthlyData = data;
         this.calculateSummary();
-        this.recreateChart();
+        this.dataLoaded = true;
+        this.isLoading = false;
+
+        // Wait for view to be ready and create chart
+        if (this.isViewInitialized) {
+          this.createChartWithDelay();
+        }
       },
       error: (error) => {
         console.error('Error loading monthly data:', error);
+        this.isLoading = false;
+        this.dataLoaded = false;
       }
     });
   }

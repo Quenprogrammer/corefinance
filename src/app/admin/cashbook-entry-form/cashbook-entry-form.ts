@@ -383,7 +383,7 @@ import { CashbookEntry, TransactionType, ReceiptCategory, PaymentCategory } from
 
     .form-container {
       background: white;
-      border-radius: 20px;
+
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
       overflow: hidden;
       transition: all 0.3s ease;

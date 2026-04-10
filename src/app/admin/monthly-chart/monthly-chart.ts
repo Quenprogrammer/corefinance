@@ -218,7 +218,7 @@ export class MonthlyChartComponent implements AfterViewInit, OnDestroy, OnChange
             beginAtZero: true,
             ticks: {
               callback: function(value) {
-                return '₹' + Number(value).toLocaleString();
+                return '₦' + Number(value).toLocaleString();
               },
               font: {
                 size: 10
