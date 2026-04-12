@@ -9,7 +9,7 @@ import { CashbookEntry, TransactionType, ReceiptCategory, PaymentCategory } from
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="form-container">
+ <!--   <div class="form-container">
       <div class="form-header">
         <div class="header-content">
           <div class="header-icon">
@@ -26,7 +26,7 @@ import { CashbookEntry, TransactionType, ReceiptCategory, PaymentCategory } from
 
       <div class="form-body">
         <form #entryForm="ngForm" (ngSubmit)="onSubmit()">
-          <!-- Transaction Type Toggle -->
+          &lt;!&ndash; Transaction Type Toggle &ndash;&gt;
           <div class="transaction-toggle">
             <button type="button"
                     [class.active]="entry.transactionType === 'receipt'"
@@ -49,7 +49,7 @@ import { CashbookEntry, TransactionType, ReceiptCategory, PaymentCategory } from
           </div>
 
           <div class="form-grid">
-            <!-- Basic Information Section -->
+            &lt;!&ndash; Basic Information Section &ndash;&gt;
             <div class="form-section">
               <div class="section-title">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -130,7 +130,7 @@ import { CashbookEntry, TransactionType, ReceiptCategory, PaymentCategory } from
               </div>
             </div>
 
-            <!-- Party Information Section -->
+            &lt;!&ndash; Party Information Section &ndash;&gt;
             <div class="form-section">
               <div class="section-title">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -242,7 +242,7 @@ import { CashbookEntry, TransactionType, ReceiptCategory, PaymentCategory } from
               </div>
             </div>
 
-            <!-- Financial Information Section -->
+            &lt;!&ndash; Financial Information Section &ndash;&gt;
             <div class="form-section">
               <div class="section-title">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -329,7 +329,7 @@ import { CashbookEntry, TransactionType, ReceiptCategory, PaymentCategory } from
             </div>
           </div>
 
-          <!-- Error Summary -->
+          &lt;!&ndash; Error Summary &ndash;&gt;
           <div class="error-summary" *ngIf="showErrorSummary && !isFormValid()">
             <div class="error-summary-header">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -353,7 +353,7 @@ import { CashbookEntry, TransactionType, ReceiptCategory, PaymentCategory } from
             </ul>
           </div>
 
-          <!-- Submit Button -->
+          &lt;!&ndash; Submit Button &ndash;&gt;
           <div class="form-actions">
             <button type="button" class="btn-secondary" (click)="resetForm()">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -373,7 +373,9 @@ import { CashbookEntry, TransactionType, ReceiptCategory, PaymentCategory } from
           </div>
         </form>
       </div>
-    </div>
+    </div>-->
+
+
   `,
   styles: [`
     :host {

@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
-import {Router} from '@angular/router';
-import {AuthService} from '../../services/guard/auth/auth';
-import {FormsModule} from '@angular/forms';
-import {NgIf} from '@angular/common';
+import { Router } from '@angular/router';
+import { AuthService } from '../../services/guard/auth/auth';
+import { FormsModule } from '@angular/forms';
+import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-login',
@@ -24,10 +24,8 @@ export class Login {
   ) {}
 
   ngOnInit() {
-    // ✅ AUTO LOGIN AFTER REFRESH
     if (this.auth.isLoggedIn()) {
-      const role = this.auth.getRole();
-      this.router.navigate([`/${role}`]);
+      this.redirectBasedOnRole();
     }
   }
 
@@ -39,7 +37,25 @@ export class Login {
       return;
     }
 
+    this.redirectBasedOnRole();
+  }
+
+  // Add this method to handle role-based redirection
+  private redirectBasedOnRole() {
     const role = this.auth.getRole();
-    this.router.navigate([`/${role}`]);
+
+    switch(role) {
+      case 'admin':
+        this.router.navigate(['/menu']);  // Admin goes to menu
+        break;
+      case 'user':
+        this.router.navigate(['/user']);
+        break;
+      case 'viewer':
+        this.router.navigate(['/viewer']);
+        break;
+      default:
+        this.router.navigate(['/login']);
+    }
   }
 }

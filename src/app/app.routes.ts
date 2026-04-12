@@ -116,10 +116,15 @@ export const routes: Routes = [
 
   // 👇 optional: wildcard (redirect unknown routes)
 
-  {
+/*  {
     path: '',
     loadComponent: () => import('./login/login').then(m => m.Login),
     canActivate: [AuthGuard]
+  },*/
+  {
+    path: '',
+    loadComponent: () => import('./login/login').then(m => m.Login),
+
   },
 
   {
