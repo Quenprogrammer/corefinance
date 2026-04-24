@@ -2,6 +2,30 @@ import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CashbookEntry } from '../../../model/cashbook.model';
 
+// Add this helper function to convert Firestore Timestamp to Date
+function convertToDate(value: any): Date | null {
+  if (!value) return null;
+
+  // If it's a Firestore Timestamp object
+  if (typeof value === 'object' && value !== null && 'toDate' in value && typeof value.toDate === 'function') {
+    return value.toDate();
+  }
+
+  // If it's a Firestore Timestamp with seconds/nanoseconds
+  if (typeof value === 'object' && value !== null && 'seconds' in value) {
+    return new Date(value.seconds * 1000);
+  }
+
+  // If it's already a Date
+  if (value instanceof Date) {
+    return value;
+  }
+
+  // If it's a string or number
+  const date = new Date(value);
+  return isNaN(date.getTime()) ? null : date;
+}
+
 @Component({
   selector: 'app-cashbook-table',
   standalone: true,
@@ -262,7 +286,7 @@ import { CashbookEntry } from '../../../model/cashbook.model';
                     PAYMENTS
                   </div>
                 </th>
-              </tr>
+               </tr>
               <!-- Column Headers -->
               <tr class="column-headers">
                 <th>Date</th>
@@ -278,7 +302,7 @@ import { CashbookEntry } from '../../../model/cashbook.model';
                 <th>To/Paid</th>
                 <th>Description</th>
                 <th>Amount</th>
-              </tr>
+               </tr>
               </thead>
               <tbody>
                 @for (entry of entries(); track trackById($index, entry)) {
@@ -287,7 +311,7 @@ import { CashbookEntry } from '../../../model/cashbook.model';
 
                     <!-- Receipt Fields -->
                     @if (entry.transactionType === 'receipt') {
-                      <td class="date-col">{{ entry.date | date:'dd/MM/yyyy' }}</td>
+                      <td class="date-col">{{ formatDate(entry.date) }}</td>
                       <td class="voucher-col"><span class="voucher-number">{{ entry.voucherNumber }}</span></td>
                       <td class="party-col">{{ entry.receivedFrom }}</td>
                       <td class="desc-col">{{ entry.description }}</td>
@@ -304,7 +328,7 @@ import { CashbookEntry } from '../../../model/cashbook.model';
 
                     <!-- Payment Fields -->
                     @if (entry.transactionType === 'payment') {
-                      <td class="date-col">{{ entry.date | date:'dd/MM/yyyy' }}</td>
+                      <td class="date-col">{{ formatDate(entry.date) }}</td>
                       <td class="voucher-col"><span class="voucher-number">{{ entry.voucherNumber }}</span></td>
                       <td class="dv-col"><span class="dv-number">{{ entry.dvNumber }}</span></td>
                       <td class="party-col">{{ entry.paidTo }}</td>
@@ -318,7 +342,7 @@ import { CashbookEntry } from '../../../model/cashbook.model';
                       <td class="empty-cell">-</td>
                       <td class="empty-cell">-</td>
                     }
-                  </tr>
+                   </tr>
                 }
 
               <!-- Empty State -->
@@ -341,13 +365,13 @@ import { CashbookEntry } from '../../../model/cashbook.model';
                   <td class="summary-amount total-receipts">{{ getTotalReceipts() | number:'1.2-2' }}</td>
                   <td colspan="5" class="summary-label">Total Payments</td>
                   <td class="summary-amount total-payments">{{ getTotalPayments() | number:'1.2-2' }}</td>
-                </tr>
+                 </tr>
                 <tr class="summary-row">
                   <td colspan="11" class="summary-label">Net Balance</td>
                   <td class="summary-amount" [class.positive]="getNetBalance() >= 0" [class.negative]="getNetBalance() < 0">
                     {{ getNetBalance() | number:'1.2-2' }}
                   </td>
-                </tr>
+                 </tr>
                 </tfoot>
               }
             </table>
@@ -356,7 +380,6 @@ import { CashbookEntry } from '../../../model/cashbook.model';
       </div>
     </div>
   `,
-
 })
 export class CashbookTableComponent {
   entries = input.required<CashbookEntry[]>();
@@ -365,6 +388,19 @@ export class CashbookTableComponent {
 
   trackById(index: number, entry: CashbookEntry): string {
     return entry.id!;
+  }
+
+  // Helper method to format date from Firestore Timestamp
+  formatDate(dateValue: any): string {
+    const date = convertToDate(dateValue);
+    if (!date) return '-';
+
+    // Format as dd/MM/yyyy
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+
+    return `${day}/${month}/${year}`;
   }
 
   getTotalReceipts(): number {
@@ -420,9 +456,11 @@ export class CashbookTableComponent {
 
     // Table Data
     entries.forEach(entry => {
+      const formattedDate = this.formatDate(entry.date);
+
       if (entry.transactionType === 'receipt') {
         excelData.push([
-          new Date(entry.date).toLocaleDateString(),
+          formattedDate,
           entry.voucherNumber,
           entry.receivedFrom || '',
           entry.description,
@@ -433,7 +471,7 @@ export class CashbookTableComponent {
       } else {
         excelData.push([
           '', '', '', '', '', '',
-          new Date(entry.date).toLocaleDateString(),
+          formattedDate,
           entry.voucherNumber,
           entry.dvNumber || '',
           entry.paidTo || '',

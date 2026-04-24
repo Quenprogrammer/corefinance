@@ -665,5 +665,7 @@ export class DashboardStatsComponent implements AfterViewInit {
     {icon:"cashbook/9.png", name:"Receipt Transactions", link:"/receipts-categories"},
     {icon:"cashbook/13.svg", name:"Export To Excel", link:"/exportData"},
     {icon:"cashbook/12.png", name:"Report A problem" , link:"/complain"},
+    {icon:"cashbook/storing-backup-svgrepo-com.svg", name:"Backup Data" , link:"/complain"},
+    {icon:"cashbook/delete-clear-svgrepo-com.svg", name:"Delete all Data" , link:"/deleteAllDATA"},
   ]
 }

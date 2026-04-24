@@ -10,9 +10,9 @@ import {
   query,
   where,
   orderBy,
-  writeBatch
+  writeBatch, getDocs, limit
 } from '@angular/fire/firestore';
-import { Observable, from, map, catchError, throwError } from 'rxjs';
+import { Observable, from, map, catchError, throwError, switchMap, of } from 'rxjs';
 import { CashbookEntry, FilterCriteria, DashboardStats } from '../model/cashbook.model';
 
 // Define missing interfaces
@@ -434,9 +434,7 @@ export class CashbookService {
     printWindow.print();
   }
 
-
-
-// Add this method to your CashbookService class
+  // Add this method to your CashbookService class
   getEntriesByYear(year: number): Observable<CashbookEntry[]> {
     return new Observable<CashbookEntry[]>((observer) => {
       const entries = this.entriesSignal();
@@ -445,6 +443,7 @@ export class CashbookService {
       observer.complete();
     });
   }
+
   // Add this method to get entries by year and month
   getEntriesByYearAndMonth(year: number, month: number): Observable<CashbookEntry[]> {
     return new Observable<CashbookEntry[]>((observer) => {
@@ -455,5 +454,307 @@ export class CashbookService {
     });
   }
 
+  // Add these optimized deletion methods to your CashbookService class
 
+  /**
+   * Optimized delete all entries - only fetches document IDs, not full data
+   * This minimizes data transfer and improves performance
+   */
+  deleteAllEntriesOptimized(password: string, confirmedPassword: string): Observable<{
+    success: boolean;
+    message: string;
+    deletedCount: number;
+    executionTime?: number;
+  }> {
+    const startTime = performance.now();
+
+    // Password confirmation check
+    const ADMIN_PASSWORD = 'admin123'; // Move to environment variables
+
+    if (password !== ADMIN_PASSWORD) {
+      return throwError(() => new Error('❌ Incorrect admin password'));
+    }
+
+    if (password !== confirmedPassword) {
+      return throwError(() => new Error('❌ Passwords do not match'));
+    }
+
+    this.loadingSignal.set(true);
+    this.errorSignal.set(null);
+
+    // Create a query that only gets document references
+    const q = query(this.cashbookCollection);
+
+    // Use getDocs to fetch only document references (IDs)
+    return from(getDocs(q)).pipe(
+      switchMap((snapshot) => {
+        const deletedCount = snapshot.size;
+
+        if (deletedCount === 0) {
+          const executionTime = performance.now() - startTime;
+          this.loadingSignal.set(false);
+          return of({
+            success: true,
+            message: '📭 No documents to delete',
+            deletedCount: 0,
+            executionTime
+          });
+        }
+
+        // Delete in batches of 500 (Firestore limit)
+        const batches: Promise<void>[] = [];
+        let currentBatch = writeBatch(this.firestore);
+        let operationCount = 0;
+
+        snapshot.docs.forEach((document, index) => {
+          currentBatch.delete(document.ref);
+          operationCount++;
+
+          // When batch reaches 500 operations or it's the last document
+          if (operationCount === 500 || index === snapshot.docs.length - 1) {
+            batches.push(currentBatch.commit());
+
+            // Create new batch if not on last iteration
+            if (index !== snapshot.docs.length - 1) {
+              currentBatch = writeBatch(this.firestore);
+              operationCount = 0;
+            }
+          }
+        });
+
+        // Execute all batches in parallel
+        return from(Promise.all(batches)).pipe(
+          map(() => {
+            const executionTime = performance.now() - startTime;
+
+            // Reload entries to update the signal
+            this.loadEntries();
+            this.loadingSignal.set(false);
+
+            return {
+              success: true,
+              message: `✅ Successfully deleted ${deletedCount} document(s) in ${(executionTime / 1000).toFixed(2)} seconds`,
+              deletedCount: deletedCount,
+              executionTime: executionTime
+            };
+          })
+        );
+      }),
+      catchError((error: any) => {
+        this.loadingSignal.set(false);
+        this.errorSignal.set(error.message);
+        console.error('Delete error:', error);
+        return throwError(() => new Error(`❌ Failed to delete documents: ${error.message}`));
+      })
+    );
+  }
+
+  /**
+   * Delete entries with pagination for very large collections
+   * Processes in chunks to avoid memory issues
+   */
+  deleteAllEntriesPaginated(
+    password: string,
+    confirmedPassword: string,
+    batchSize: number = 500
+  ): Observable<{
+    progress: number;
+    deletedCount: number;
+    totalCount: number;
+    status: 'processing' | 'completed' | 'error';
+    message?: string;
+  }> {
+    // Password validation
+    const ADMIN_PASSWORD = 'admin123';
+
+    if (password !== ADMIN_PASSWORD || password !== confirmedPassword) {
+      return throwError(() => new Error('Password verification failed'));
+    }
+
+    return new Observable((observer) => {
+      this.loadingSignal.set(true);
+
+      let totalDeleted = 0;
+
+      const deleteBatch = async () => {
+        try {
+          // Get next batch of documents (only IDs)
+          const q = query(this.cashbookCollection, limit(batchSize));
+          const snapshot = await getDocs(q);
+
+          if (snapshot.empty) {
+            // No more documents to delete
+            observer.next({
+              progress: 100,
+              deletedCount: totalDeleted,
+              totalCount: totalDeleted,
+              status: 'completed',
+              message: `✅ Successfully deleted ${totalDeleted} document(s)`
+            });
+            observer.complete();
+            this.loadEntries();
+            this.loadingSignal.set(false);
+            return;
+          }
+
+          // Delete current batch
+          const batch = writeBatch(this.firestore);
+          snapshot.docs.forEach((doc) => {
+            batch.delete(doc.ref);
+          });
+
+          await batch.commit();
+          totalDeleted += snapshot.size;
+
+          // Emit progress
+          observer.next({
+            progress: Math.min((totalDeleted / (totalDeleted + snapshot.size)) * 100, 99),
+            deletedCount: totalDeleted,
+            totalCount: totalDeleted + snapshot.size,
+            status: 'processing',
+            message: `Deleted ${totalDeleted} documents so far...`
+          });
+
+          // Continue with next batch
+          if (snapshot.size === batchSize) {
+            setTimeout(() => deleteBatch(), 100); // Small delay to avoid rate limiting
+          } else {
+            // All done
+            observer.next({
+              progress: 100,
+              deletedCount: totalDeleted,
+              totalCount: totalDeleted,
+              status: 'completed',
+              message: `✅ Successfully deleted ${totalDeleted} document(s)`
+            });
+            observer.complete();
+            this.loadEntries();
+            this.loadingSignal.set(false);
+          }
+
+        } catch (error: any) {
+          observer.error({
+            progress: (totalDeleted / (totalDeleted + batchSize)) * 100,
+            deletedCount: totalDeleted,
+            totalCount: totalDeleted,
+            status: 'error',
+            message: error.message
+          });
+          this.loadingSignal.set(false);
+        }
+      };
+
+      // Start deletion process
+      deleteBatch();
+    });
+  }
+
+  /**
+   * Delete entries by year (optimized)
+   */
+  deleteEntriesByYearOptimized(
+    year: number,
+    password: string,
+    confirmedPassword: string
+  ): Observable<{ success: boolean; message: string; deletedCount: number }> {
+    const ADMIN_PASSWORD = 'admin123';
+
+    if (password !== ADMIN_PASSWORD || password !== confirmedPassword) {
+      return throwError(() => new Error('Password verification failed'));
+    }
+
+    this.loadingSignal.set(true);
+
+    // Query only documents from specific year
+    const q = query(this.cashbookCollection, where('year', '==', year));
+
+    return from(getDocs(q)).pipe(
+      switchMap((snapshot) => {
+        const deletedCount = snapshot.size;
+
+        if (deletedCount === 0) {
+          this.loadingSignal.set(false);
+          return of({
+            success: true,
+            message: `No documents found for year ${year}`,
+            deletedCount: 0
+          });
+        }
+
+        // Delete in batches
+        const batches: Promise<void>[] = [];
+        let currentBatch = writeBatch(this.firestore);
+        let operationCount = 0;
+
+        snapshot.docs.forEach((document, index) => {
+          currentBatch.delete(document.ref);
+          operationCount++;
+
+          if (operationCount === 500 || index === snapshot.docs.length - 1) {
+            batches.push(currentBatch.commit());
+            if (index !== snapshot.docs.length - 1) {
+              currentBatch = writeBatch(this.firestore);
+              operationCount = 0;
+            }
+          }
+        });
+
+        return from(Promise.all(batches)).pipe(
+          map(() => {
+            this.loadEntries();
+            this.loadingSignal.set(false);
+            return {
+              success: true,
+              message: `✅ Successfully deleted ${deletedCount} document(s) from year ${year}`,
+              deletedCount: deletedCount
+            };
+          })
+        );
+      }),
+      catchError((error: any) => {
+        this.loadingSignal.set(false);
+        return throwError(() => new Error(`Failed to delete: ${error.message}`));
+      })
+    );
+  }
+
+  /**
+   * Get count of documents without fetching them
+   * Useful for showing confirmation dialog
+   */
+  async getDocumentCount(): Promise<number> {
+    try {
+      const snapshot = await getDocs(query(this.cashbookCollection));
+      return snapshot.size;
+    } catch (error) {
+      console.error('Error getting document count:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Dry run - shows how many documents would be deleted without actually deleting
+   */
+  async dryRunDelete(password: string): Promise<{
+    totalDocuments: number;
+    estimatedBatches: number;
+    estimatedTime: string;
+  }> {
+    const ADMIN_PASSWORD = 'admin123';
+
+    if (password !== ADMIN_PASSWORD) {
+      throw new Error('Incorrect admin password');
+    }
+
+    const snapshot = await getDocs(query(this.cashbookCollection));
+    const totalDocuments = snapshot.size;
+    const estimatedBatches = Math.ceil(totalDocuments / 500);
+    const estimatedTime = (totalDocuments / 1000).toFixed(1); // Rough estimate: ~1000 docs/sec
+
+    return {
+      totalDocuments,
+      estimatedBatches,
+      estimatedTime: `${estimatedTime} seconds`
+    };
+  }
 }

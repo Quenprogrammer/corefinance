@@ -1,0 +1,208 @@
+<!--<div class="" style="background: #1e1e2e;">
+
+
+  &lt;!&ndash; Chart Section &ndash;&gt;
+  <div class="chart-container" #chartContainer>
+    <div class="chart-header">
+      <h3 class="chart-title">Transaction Overview</h3>
+      <div class="chart-legend">
+            <span class="legend-item">
+              <span class="legend-color receipts-color"></span>
+              Receipts
+            </span>
+        <span class="legend-item">
+              <span class="legend-color payments-color"></span>
+              Payments
+            </span>
+      </div>
+    </div>
+    <div class="chart-wrapper">
+      <div class="container py-4">
+        <div class="row g-4">
+          @for (item of menu; track item.icon) {
+            <div class="col-6 col-md-4 col-lg-3">
+              <div class="card h-100 menu-card" [routerLink]="item.link">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center text-center">
+                  &lt;!&ndash; Centered Image with responsive sizing and graceful fallback &ndash;&gt;
+                  <div class="img-wrapper mb-3">
+                    <img [src]="item.icon" alt="{{ item.name }}" class="menu-img" loading="lazy">
+                  </div>
+                  &lt;!&ndash; Centered Title / Text &ndash;&gt;
+                  <h6 class="card-title mb-0">{{ item.name }}</h6>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>-->
+<div class="container-fluid pt-2" style="background: #1e1e2e;">
+<ims-menubar></ims-menubar>
+
+
+  <div class="dashboard-container">
+
+    <ul class="list-unstyled list-py-1 mt-n5">
+      <!-- General Cashbook -->
+      <li class="d-flex align-items-center fs-6 mb-1">
+        <span class="me-3 category-label general-label">
+          <i class="bi bi-journal-bookmark-fill"></i>
+          General Cashbook
+        </span>
+        <div class="progress flex-grow-1 progress-modern">
+          <div class="progress-bar progress-general" role="progressbar"
+               [style.width]="getPercentage('cashbook')"
+               [attr.aria-valuenow]="counts.cashbook"
+               aria-valuemin="0"
+               [attr.aria-valuemax]="totalDocuments">
+            <span class="progress-text">{{ getPercentage('cashbook') }}</span>
+          </div>
+        </div>
+        <span class="ms-3 count-badge">
+          <i class="bi bi-receipt"></i>
+          {{ counts.cashbook }}
+        </span>
+      </li>
+
+      <!-- Personal Account -->
+      <li class="d-flex align-items-center fs-6 mb-1">
+        <span class="me-3 category-label personal-label">
+          <i class="bi bi-person-badge"></i>
+          Personal Account
+        </span>
+        <div class="progress flex-grow-1 progress-modern">
+          <div class="progress-bar progress-personal" role="progressbar"
+               [style.width]="getPercentage('personal')"
+               [attr.aria-valuenow]="counts.personal"
+               aria-valuemin="0"
+               [attr.aria-valuemax]="totalDocuments">
+            <span class="progress-text">{{ getPercentage('personal') }}</span>
+          </div>
+        </div>
+        <span class="ms-3 count-badge">
+          <i class="bi bi-receipt"></i>
+          {{ counts.personal }}
+        </span>
+      </li>
+
+      <!-- Income Account -->
+      <li class="d-flex align-items-center fs-6 mb-1">
+        <span class="me-3 category-label income-label">
+          <i class="bi bi-graph-up-arrow"></i>
+          Income Account
+        </span>
+        <div class="progress flex-grow-1 progress-modern">
+          <div class="progress-bar progress-income" role="progressbar"
+               [style.width]="getPercentage('income')"
+               [attr.aria-valuenow]="counts.income"
+               aria-valuemin="0"
+               [attr.aria-valuemax]="totalDocuments">
+            <span class="progress-text">{{ getPercentage('income') }}</span>
+          </div>
+        </div>
+        <span class="ms-3 count-badge">
+          <i class="bi bi-receipt"></i>
+          {{ counts.income }}
+        </span>
+      </li>
+
+      <!-- Expenses Account -->
+      <li class="d-flex align-items-center fs-6 mb-1">
+        <span class="me-3 category-label expenses-label">
+          <i class="bi bi-arrow-down-circle"></i>
+          Expenses Account
+        </span>
+        <div class="progress flex-grow-1 progress-modern">
+          <div class="progress-bar progress-expenses" role="progressbar"
+               [style.width]="getPercentage('expense')"
+               [attr.aria-valuenow]="counts.expense"
+               aria-valuemin="0"
+               [attr.aria-valuemax]="totalDocuments">
+            <span class="progress-text">{{ getPercentage('expense') }}</span>
+          </div>
+        </div>
+        <span class="ms-3 count-badge">
+          <i class="bi bi-receipt"></i>
+          {{ counts.expense }}
+        </span>
+      </li>
+
+      <!-- Savings Account -->
+      <li class="d-flex align-items-center fs-6 mb-1">
+        <span class="me-3 category-label savings-label">
+          <i class="bi bi-piggy-bank"></i>
+          Savings Account
+        </span>
+        <div class="progress flex-grow-1 progress-modern">
+          <div class="progress-bar progress-savings" role="progressbar"
+               [style.width]="getPercentage('savings')"
+               [attr.aria-valuenow]="counts.savings"
+               aria-valuemin="0"
+               [attr.aria-valuemax]="totalDocuments">
+            <span class="progress-text">{{ getPercentage('savings') }}</span>
+          </div>
+        </div>
+        <span class="ms-3 count-badge">
+          <i class="bi bi-receipt"></i>
+          {{ counts.savings }}
+        </span>
+      </li>
+    </ul>
+
+    <!-- Optional: Loading and Error Indicators -->
+    <div *ngIf="loading" class="text-center mt-3">
+      <div class="spinner-border spinner-border-sm text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <span class="ms-2">Updating counts...</span>
+    </div>
+
+    <div *ngIf="error" class="alert alert-danger mt-3 alert-sm">
+      {{ error }}
+    </div>
+    <!-- Chart Section -->
+    <div class="chart-container" #chartContainer>
+      <div class="chart-header">
+        <h3 class="chart-title">Choose Cashbook Account</h3>
+
+      </div>
+      <div class="chart-wrapper">
+        <div class="container py-4">
+          <div class="row  ">
+            @for (item of menu; track item.icon) {
+              <div class="col-6 col-md-4 col-lg-3 px-2 mb-4">
+                <div class="card h-100 menu-card" [routerLink]="item.link">
+                  <div class="card-body d-flex flex-column align-items-center justify-content-center text-center">
+                    <!-- Centered Image with responsive sizing and graceful fallback -->
+                    <div class="img-wrapper mb-3">
+                      <img [src]="item.icon" alt="{{ item.name }}" class="menu-img" loading="lazy">
+                    </div>
+                    <!-- Centered Title / Text -->
+                    <h6 class="card-title mb-0">{{ item.name }}</h6>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+
+
+
+
+
+  <!-- Reports Section -->
+  <div class="row mt-4">
+    <div class="col-12 mb-4">
+
+    </div>
+  </div>
+</div>
+

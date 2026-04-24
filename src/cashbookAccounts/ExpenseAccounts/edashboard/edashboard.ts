@@ -1,0 +1,1590 @@
+import {Component, ElementRef, HostListener, inject, signal, ViewChild, OnInit, OnDestroy, input} from '@angular/core';
+import { DashboardStats, FilterCriteria, TransactionType, CashbookEntry } from '../../../app/core/model/cashbook.model';
+import { DashboardStatsComponent } from '../../../app/admin/dashboard/dashboard-stats/dashboard-stats';
+import { LoadingSpinnerComponent } from '../../../app/core/shared/components/loading-spinner/loading-spinner';
+import { NgIf, CommonModule } from '@angular/common';
+import { Firestore, collection, collectionData, query, orderBy, where } from '@angular/fire/firestore';
+import { Subscription } from 'rxjs';
+import {RouterLink} from '@angular/router';
+
+@Component({
+  selector: 'app-edashboard',
+  imports: [
+    DashboardStatsComponent,
+    LoadingSpinnerComponent,
+    NgIf,
+    CommonModule,
+    RouterLink
+  ],
+  templateUrl: './edashboard.html',
+  styles: [`
+    :host {
+      display: block;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .dashboard-container {
+      padding: 20px;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    /* Stat Card Base Styles */
+    .stat-card {
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: white;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card-inner {
+      position: relative;
+      padding: 20px;
+      z-index: 2;
+      background: white;
+    }
+
+    /* Card Colors - Subtle Gradients */
+    .receipt-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+      border-left: 4px solid #4c9aff;
+    }
+
+    .payment-card {
+      background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+      border-left: 4px solid #ff6b6b;
+    }
+
+    .balance-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+      border-left: 4px solid #51cf66;
+    }
+
+    .average-card {
+      background: linear-gradient(135deg, #ffffff 0%, #fff9e6 100%);
+      border-left: 4px solid #ffd43b;
+    }
+
+    /* Icon Styles */
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .stat-icon-wrapper {
+      margin-bottom: 0;
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .receipt-icon {
+      background: linear-gradient(135deg, #4c9aff15 0%, #4c9aff25 100%);
+      color: #4c9aff;
+    }
+
+    .payment-icon {
+      background: linear-gradient(135deg, #ff6b6b15 0%, #ff6b6b25 100%);
+      color: #ff6b6b;
+    }
+
+    .balance-icon {
+      background: linear-gradient(135deg, #51cf6615 0%, #51cf6625 100%);
+      color: #51cf66;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .average-icon {
+      background: linear-gradient(135deg, #ffd43b15 0%, #ffd43b25 100%);
+      color: #ffd43b;
+    }
+
+    .stat-card:hover .stat-icon {
+      transform: scale(1.02);
+    }
+
+    /* Content Styles */
+    .stat-content {
+      color: #1f2937;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0 0 6px 0;
+      letter-spacing: -0.3px;
+      line-height: 1.2;
+      color: #111827;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      font-weight: 500;
+      margin: 0 0 10px 0;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .stat-meta {
+      margin-top: 8px;
+    }
+
+    .stat-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      background: #f3f4f6;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #6b7280;
+    }
+
+    .stat-badge svg {
+      opacity: 0.7;
+    }
+
+    /* Trend Indicators */
+    .stat-trend {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    .stat-trend.positive {
+      color: #10b981;
+    }
+
+    .stat-trend.negative {
+      color: #ef4444;
+    }
+
+    .stat-trend.neutral {
+      color: #f59e0b;
+    }
+
+    /* Shine Effect */
+    .card-shine {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+      transform: translateX(-100%);
+      transition: transform 0.6s ease;
+      pointer-events: none;
+    }
+
+    .stat-card:hover .card-shine {
+      transform: translateX(100%);
+    }
+
+    /* Chart Section */
+    .chart-container {
+      background: white;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+      margin-top: 24px;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .chart-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #111827;
+      margin: 0;
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 20px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+
+    .receipts-color {
+      background: linear-gradient(135deg, #4c9aff, #667eea);
+    }
+
+    .payments-color {
+      background: linear-gradient(135deg, #ff6b6b, #f5576c);
+    }
+
+    .chart-wrapper {
+      position: relative;
+      width: 100%;
+      min-height: 400px;
+      background: #fafbfc;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    /* Animation for initial load - FIXED to not hide the chart */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .stat-card {
+      animation: fadeInUp 0.4s ease-out forwards;
+      opacity: 0;
+    }
+
+    .stat-card:nth-child(1) { animation-delay: 0.05s; }
+    .stat-card:nth-child(2) { animation-delay: 0.1s; }
+    .stat-card:nth-child(3) { animation-delay: 0.15s; }
+    .stat-card:nth-child(4) { animation-delay: 0.2s; }
+
+    /* Chart container starts visible but with fade animation */
+    .chart-container {
+      animation: fadeInUp 0.5s ease-out forwards;
+      animation-delay: 0.25s;
+      opacity: 1; /* Changed from 0 to 1 */
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-container {
+        padding: 16px;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .stat-value {
+        font-size: 24px;
+      }
+
+      .stat-card-inner {
+        padding: 16px;
+      }
+
+      .stat-icon {
+        width: 40px;
+        height: 40px;
+      }
+
+      .chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .chart-wrapper {
+        min-height: 300px;
+        padding: 12px;
+      }
+    }
+
+    /* Dark Mode Support */
+    @media (prefers-color-scheme: dark) {
+      .stat-card {
+        background: #1f2937;
+      }
+
+      .stat-card-inner {
+        background: #1f2937;
+      }
+
+      .receipt-card,
+      .payment-card,
+      .balance-card,
+      .average-card {
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+      }
+
+      .stat-value {
+        color: #f3f4f6;
+      }
+
+      .stat-label {
+        color: #9ca3af;
+      }
+
+      .stat-badge {
+        background: #374151;
+        color: #9ca3af;
+      }
+
+      .chart-container {
+        background: #1f2937;
+      }
+
+      .chart-title {
+        color: #f3f4f6;
+      }
+
+      .chart-wrapper {
+        background: #111827;
+      }
+    }
+
+    /* ========== GLOBAL / COMPONENT STYLES ========== */
+    /* Ensures consistent box-sizing and smooth rendering */
+    .menu-card {
+      transition: transform 0.25s ease, box-shadow 0.3s ease;
+      border: none;
+      border-radius: 1.25rem;
+      background:#1f2937;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.02);
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    /* Interactive hover effect: subtle lift + deeper shadow */
+    .menu-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Card body: flex column centering both horizontally and vertically */
+    .menu-card .card-body {
+      padding: 1.75rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 180px;
+      background: #1f2937;
+      border-radius: 1.25rem;
+    }
+
+    /* Image wrapper for consistent sizing and centering */
+    .img-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+    }
+
+    /* Image styling: fixed width with max-width for responsiveness, maintain aspect ratio */
+    .menu-img {
+      width: 100px;
+      max-width: 80%;
+      height: auto;
+      object-fit: contain;
+      transition: transform 0.2s ease;
+      display: block;
+      margin: 0 auto;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.05));
+    }
+
+    /* Slight image zoom on card hover for extra liveliness */
+    .menu-card:hover .menu-img {
+      transform: scale(1.02);
+    }
+
+    /* Title / Text styling: centered, modern typography */
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: white;
+      margin-top: 0.5rem;
+      margin-bottom: 0;
+      line-height: 1.4;
+      transition: color 0.2s;
+      word-break: break-word;
+      max-width: 100%;
+    }
+
+    /* On hover, text gets slightly richer color */
+    .menu-card:hover .card-title {
+      color: #0f172a;
+    }
+
+    /* Additional responsive tweaks: for very small devices (<=480px) adjust image size and padding */
+    @media (max-width: 576px) {
+      .menu-img {
+        width: 70px;
+      }
+      .menu-card .card-body {
+        padding: 1.25rem 0.75rem;
+        min-height: 150px;
+      }
+      .card-title {
+        font-size: 0.85rem;
+      }
+    }
+
+    /* For medium screens where grid looks neat, keep image width balanced */
+    @media (min-width: 768px) and (max-width: 991px) {
+      .menu-img {
+        width: 90px;
+      }
+    }
+
+    /* Optional: active/tap effect for mobile */
+    .menu-card:active {
+      transform: translateY(-2px);
+      transition: transform 0.05s;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    // Add this to your component's styles array
+
+    /* Modern Header Styles */
+    .dashboard-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 20px;
+      padding: 24px 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dashboard-header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 1%, transparent 1%);
+      background-size: 50px 50px;
+      animation: shimmer 30s linear infinite;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(50px, 50px); }
+    }
+
+    .header-content-wrapper {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .title-section {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .title-icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(10px);
+    }
+
+    .title-icon svg {
+      width: 28px;
+      height: 28px;
+      color: white;
+    }
+
+    .title-text h1 {
+      color: white;
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .title-text p {
+      color: rgba(255, 255, 255, 0.9);
+      margin: 4px 0 0 0;
+      font-size: 14px;
+    }
+
+    .action-buttons-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .action-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .export-btn:hover {
+      background: rgba(40, 167, 69, 0.3);
+      border-color: #28a745;
+    }
+
+    .print-btn:hover {
+      background: rgba(23, 162, 184, 0.3);
+      border-color: #17a2b8;
+    }
+
+    .clear-btn:hover {
+      background: rgba(220, 53, 69, 0.3);
+      border-color: #dc3545;
+    }
+
+    /* Modern Filters Card */
+    .filters-modern-card {
+      background: white;
+      border-radius: 20px;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+      overflow: hidden;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .filters-modern-card:hover {
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .filters-header-modern {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      padding: 16px 24px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .filters-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      color: #495057;
+      font-size: 16px;
+    }
+
+    .filters-title svg {
+      color: #667eea;
+    }
+
+    .filter-stats-badge {
+      background: #667eea;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .filters-grid-modern {
+      padding: 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .filter-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .filter-field-full {
+      grid-column: span 2;
+    }
+
+    .filter-label-modern {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #495057;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .filter-label-modern svg {
+      color: #667eea;
+    }
+
+    .filter-select-modern,
+    .filter-input-modern {
+      padding: 10px 14px;
+      border: 1.5px solid #e9ecef;
+      border-radius: 12px;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      background: white;
+      font-family: inherit;
+    }
+
+    .filter-select-modern:focus,
+    .filter-input-modern:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .filter-select-modern:hover,
+    .filter-input-modern:hover {
+      border-color: #ced4da;
+    }
+
+    .search-wrapper {
+      position: relative;
+    }
+
+    .search-input-modern {
+      width: 100%;
+      padding: 10px 14px 10px 40px;
+      border: 1.5px solid #e9ecef;
+      border-radius: 12px;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .search-input-modern:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #adb5bd;
+      pointer-events: none;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .dashboard-header {
+        padding: 20px;
+      }
+
+      .header-content-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .title-section {
+        justify-content: center;
+      }
+
+      .action-buttons-group {
+        justify-content: center;
+      }
+
+      .filters-grid-modern {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .filter-field-full {
+        grid-column: span 1;
+      }
+    }
+
+    /* Animation for filter badge */
+    .filter-stats-badge {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.05);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    // Full Screen Styles
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .tabs-container {
+      &.fullscreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100vw;
+        height: 100vh;
+        background: #ffffff;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 1000;
+      }
+    }
+
+    // Desktop Tabs (visible on larger screens)
+    .desktop-tabs {
+      display: flex;
+      gap: 4px;
+      background: #f8f9fa;
+      padding: 8px 16px 0 16px;
+      border-bottom: 2px solid #e9ecef;
+      overflow-x: auto;
+
+      &::-webkit-scrollbar {
+        height: 4px;
+      }
+
+      .tab-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        background: transparent;
+        border: none;
+        font-size: 14px;
+        font-weight: 500;
+        color: #6c757d;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        white-space: nowrap;
+
+        i {
+          font-size: 18px;
+          transition: transform 0.2s ease;
+        }
+
+        &:hover {
+          color: #4f46e5;
+          background: rgba(79, 70, 229, 0.08);
+
+          i {
+            transform: translateY(-2px);
+          }
+        }
+
+        &.active {
+          color: #4f46e5;
+          background: #ffffff;
+
+          &::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            border-radius: 3px 3px 0 0;
+            animation: slideIn 0.3s ease;
+          }
+        }
+      }
+    }
+
+    // Mobile Tabs Header (hidden on desktop)
+    .mobile-tabs-header {
+      display: none;
+      position: relative;
+      background: #ffffff;
+      border-bottom: 1px solid #e9ecef;
+      z-index: 100;
+    }
+
+    .mobile-tab-selector {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: #ffffff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      i:first-child {
+        font-size: 20px;
+        color: #4f46e5;
+        margin-right: 12px;
+      }
+
+      span {
+        flex: 1;
+        font-size: 16px;
+        font-weight: 500;
+        color: #1f2937;
+      }
+
+      i:last-child {
+        font-size: 18px;
+        color: #6c757d;
+        transition: transform 0.3s ease;
+
+        &.rotated {
+          transform: rotate(180deg);
+        }
+      }
+
+      &:active {
+        background: #f8f9fa;
+      }
+    }
+
+    .mobile-tabs-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border-bottom: 1px solid #e9ecef;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      max-height: 400px;
+      overflow-y: auto;
+      z-index: 99;
+      animation: slideDown 0.3s ease;
+
+      .mobile-tab-btn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        padding: 14px 20px;
+        background: transparent;
+        border: none;
+        font-size: 15px;
+        color: #6c757d;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+
+        i {
+          font-size: 18px;
+          width: 24px;
+        }
+
+        &:hover {
+          background: #f8f9fa;
+          color: #4f46e5;
+        }
+
+        &.active {
+          background: linear-gradient(90deg, rgba(79, 70, 229, 0.1), transparent);
+          color: #4f46e5;
+          font-weight: 500;
+
+          i {
+            color: #4f46e5;
+          }
+        }
+
+        .tab-badge {
+          margin-left: auto;
+        }
+      }
+    }
+
+    // Tab Content - Full Screen Scrollable
+    .tabs-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      background: #ffffff;
+
+      &::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+
+        &:hover {
+          background: #94a3b8;
+        }
+      }
+    }
+
+    .tab-pane {
+      animation: fadeIn 0.4s ease;
+      min-height: 100%;
+    }
+
+    // Badge Styles
+    .tab-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      background: #ef4444;
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 10px;
+      margin-left: 4px;
+    }
+
+    // Animations
+    @keyframes slideIn {
+      from {
+        transform: scaleX(0);
+        opacity: 0;
+      }
+      to {
+        transform: scaleX(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    // Responsive Breakpoints
+    @media (max-width: 768px) {
+      .desktop-tabs {
+        display: none;
+      }
+
+      .mobile-tabs-header {
+        display: block;
+      }
+
+      .tabs-content {
+        padding: 16px;
+      }
+    }
+
+    // Small screens optimization
+    @media (max-width: 480px) {
+      .mobile-tab-selector {
+        padding: 12px 16px;
+
+        span {
+          font-size: 14px;
+        }
+      }
+
+      .mobile-tabs-dropdown .mobile-tab-btn {
+        padding: 12px 16px;
+        font-size: 14px;
+      }
+
+      .tabs-content {
+        padding: 12px;
+      }
+    }
+
+    // Dark mode support
+    @media (prefers-color-scheme: dark) {
+      .tabs-container.fullscreen {
+        background: #1e1e2e;
+      }
+
+      .desktop-tabs {
+        background: #2a2a3a;
+        border-bottom-color: #3a3a4a;
+
+        .tab-btn {
+          color: #a0a0b0;
+
+          &:hover {
+            color: #818cf8;
+            background: rgba(129, 140, 248, 0.1);
+          }
+
+          &.active {
+            color: #818cf8;
+            background: #1e1e2e;
+
+            &::after {
+              background: linear-gradient(90deg, #818cf8, #a78bfa);
+            }
+          }
+        }
+      }
+
+      .mobile-tabs-header,
+      .mobile-tab-selector,
+      .mobile-tabs-dropdown {
+        background: #1e1e2e;
+        border-bottom-color: #3a3a4a;
+      }
+
+      .mobile-tab-selector {
+        span {
+          color: #e5e5e5;
+        }
+
+        i:last-child {
+          color: #a0a0b0;
+        }
+
+        &:active {
+          background: #2a2a3a;
+        }
+      }
+
+      .mobile-tabs-dropdown {
+        background: #1e1e2e;
+
+        .mobile-tab-btn {
+          color: #a0a0b0;
+
+          &:hover {
+            background: #2a2a3a;
+            color: #818cf8;
+          }
+
+          &.active {
+            background: linear-gradient(90deg, rgba(129, 140, 248, 0.15), transparent);
+            color: #818cf8;
+          }
+        }
+      }
+
+      .tabs-content {
+        background: #1e1e2e;
+      }
+    }
+
+
+  `]
+})
+export class Edashboard implements OnInit, OnDestroy {
+  private firestore = inject(Firestore);
+  private entriesSubscription: Subscription | null = null;
+
+  // State
+  selectedYear = new Date().getFullYear();
+  selectedMonth = 0;
+  collectionData = 'expense';
+  selectedType: 'all' | TransactionType = 'all';
+  searchTerm = '';
+  selectedCategory = '';
+
+  // Data arrays
+  years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
+  months = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
+
+  // State signals
+  private allEntries = signal<CashbookEntry[]>([]);
+  loading = signal<boolean>(false);
+  error = signal<string | null>(null);
+  filteredEntries = signal<CashbookEntry[]>([]);
+  stats = signal<DashboardStats>({
+    openingBalance: 0,
+    totalReceipts: 0,
+    totalPayments: 0,
+    currentBalance: 0,
+    receiptCount: 0,
+    paymentCount: 0,
+    averageTransaction: 0
+  });
+
+  // Mobile menu state
+  mobileMenuOpen = signal<boolean>(false);
+
+  ngOnInit() {
+    console.log('Current selected year:', this.selectedYear);
+    this.loadEntries();
+  }
+
+  ngOnDestroy() {
+    if (this.entriesSubscription) {
+      this.entriesSubscription.unsubscribe();
+    }
+  }
+
+  formatDate(dateValue: any): Date | null {
+    if (!dateValue) return null;
+
+    if (typeof dateValue === 'object' && dateValue !== null && 'toDate' in dateValue) {
+      return dateValue.toDate();
+    }
+    if (typeof dateValue === 'object' && dateValue !== null && 'seconds' in dateValue) {
+      return new Date(dateValue.seconds * 1000);
+    }
+    if (dateValue instanceof Date) {
+      return dateValue;
+    }
+    const date = new Date(dateValue);
+    return isNaN(date.getTime()) ? null : date;
+  }
+
+  loadEntries() {
+    this.loading.set(true);
+    this.error.set(null);
+
+    const cashbookCollection = collection(this.firestore, this.collectionData);
+    const q = query(cashbookCollection, orderBy('date', 'desc'));
+
+    this.entriesSubscription = collectionData(q, { idField: 'id' }).subscribe({
+      next: (entries: any[]) => {
+        this.allEntries.set(entries as CashbookEntry[]);
+        this.applyFilters();
+        this.calculateStats();
+        this.loading.set(false);
+      },
+      error: (error: any) => {
+        console.error('Error loading entries:', error);
+        this.error.set(error.message);
+        this.loading.set(false);
+      }
+    });
+  }
+
+  applyFilters() {
+    let filtered = [...this.allEntries()];
+
+    // Filter by year
+    filtered = filtered.filter(e => e.year === this.selectedYear);
+
+    // Filter by month
+    if (this.selectedMonth !== 0) {
+      filtered = filtered.filter(e => e.month === this.selectedMonth);
+    }
+
+    // Filter by transaction type
+    if (this.selectedType !== 'all') {
+      filtered = filtered.filter(e => e.transactionType === this.selectedType);
+    }
+
+    // Filter by search term
+    if (this.searchTerm) {
+      const search = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(e =>
+        e.description.toLowerCase().includes(search) ||
+        (e.receivedFrom?.toLowerCase().includes(search)) ||
+        (e.paidTo?.toLowerCase().includes(search))
+      );
+    }
+
+    // Filter by category
+    if (this.selectedCategory) {
+      filtered = filtered.filter(e => {
+        const category = e.transactionType === 'receipt' ? e.receiptCategory : e.paymentCategory;
+        return category === this.selectedCategory;
+      });
+    }
+
+    this.filteredEntries.set(filtered);
+    this.calculateStats();
+  }
+
+  calculateStats() {
+    const entries = this.filteredEntries();
+    const receipts = entries.filter((e: CashbookEntry) => e.transactionType === 'receipt');
+    const payments = entries.filter((e: CashbookEntry) => e.transactionType === 'payment');
+
+    const totalReceipts = receipts.reduce((sum: number, e: CashbookEntry) => sum + e.amount, 0);
+    const totalPayments = payments.reduce((sum: number, e: CashbookEntry) => sum + e.amount, 0);
+
+    // Calculate current balance
+    let balance = 0;
+    entries.forEach((entry: CashbookEntry) => {
+      if (entry.transactionType === 'receipt') {
+        balance += entry.amount;
+      } else {
+        balance -= entry.amount;
+      }
+    });
+
+    this.stats.set({
+      openingBalance: 0,
+      totalReceipts,
+      totalPayments,
+      currentBalance: balance,
+      receiptCount: receipts.length,
+      paymentCount: payments.length,
+      averageTransaction: entries.length > 0 ? (totalReceipts + totalPayments) / entries.length : 0
+    });
+  }
+
+  onYearChange() {
+    this.applyFilters();
+  }
+
+  onMonthChange() {
+    this.applyFilters();
+  }
+
+  onTypeChange() {
+    this.applyFilters();
+  }
+
+  onSearchChange() {
+    this.applyFilters();
+  }
+
+  onCategoryChange() {
+    this.applyFilters();
+  }
+
+  exportData() {
+    const entries = this.filteredEntries();
+
+    if (entries.length === 0) {
+      alert('No data to export');
+      return;
+    }
+
+    const headers = [
+      'Date', 'Voucher No', 'Type', 'Description', 'NCOA Code', 'Bank',
+      'Receipt No', 'Received From', 'DV No', 'Paid To', 'Amount', 'Balance'
+    ];
+
+    const rows = entries.map((entry: CashbookEntry) => {
+      const date = this.formatDate(entry.date);
+      const formattedDate = date ? date.toLocaleDateString() : '';
+
+      return [
+        formattedDate,
+        entry.voucherNumber,
+        entry.transactionType.toUpperCase(),
+        entry.description,
+        entry.ncoaCode,
+        entry.bankAccount,
+        entry.receiptNumber || '',
+        entry.receivedFrom || '',
+        entry.dvNumber || '',
+        entry.paidTo || '',
+        entry.amount,
+        entry.balance || ''
+      ];
+    });
+
+    const csvContent = [headers, ...rows].map((row: any[]) => row.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cashbook_${this.selectedYear}_${this.selectedMonth || 'all'}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  printReport() {
+    const entries = this.filteredEntries();
+    const currentStats = this.stats();
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const headers = [
+      'Date', 'Voucher No', 'Type', 'Description', 'NCOA Code', 'Bank',
+      'Receipt No', 'Received From', 'DV No', 'Paid To', 'Amount', 'Balance'
+    ];
+
+    const rows = entries.map((entry: CashbookEntry) => {
+      const date = this.formatDate(entry.date);
+      const formattedDate = date ? date.toLocaleDateString() : '';
+
+      return [
+        formattedDate,
+        entry.voucherNumber,
+        entry.transactionType.toUpperCase(),
+        entry.description,
+        entry.ncoaCode,
+        entry.bankAccount,
+        entry.receiptNumber || '',
+        entry.receivedFrom || '',
+        entry.dvNumber || '',
+        entry.paidTo || '',
+        entry.amount,
+        entry.balance || ''
+      ];
+    });
+
+    const content = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Cashbook Report</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <style>
+          body { padding: 20px; }
+          @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+            table { font-size: 12px; }
+            .page-break { page-break-before: always; }
+          }
+          .header { text-align: center; margin-bottom: 30px; }
+          .stats { margin-bottom: 20px; }
+          .stats .card { margin-bottom: 10px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h2>Government Cashbook System</h2>
+            <p>Report Generated: ${new Date().toLocaleString()}</p>
+          </div>
+
+          <div class="stats">
+            <h4>Financial Summary</h4>
+            <div class="row">
+              <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                  <div class="card-body">
+                    <h6>Total Receipts</h6>
+                    <h3>₦${currentStats.totalReceipts.toLocaleString()}</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                  <div class="card-body">
+                    <h6>Total Payments</h6>
+                    <h3>₦${currentStats.totalPayments.toLocaleString()}</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card bg-success text-white">
+                  <div class="card-body">
+                    <h6>Current Balance</h6>
+                    <h3>₦${currentStats.currentBalance.toLocaleString()}</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card bg-info text-white">
+                  <div class="card-body">
+                    <h6>Total Transactions</h6>
+                    <h3>${entries.length}</h3>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h4>Transaction Details</h4>
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                ${headers.map((h: string) => `<th>${h}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map((row: any[]) => `<tr>${row.map((cell: any) => `<td>${cell}</td>`).join('')}</tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(content);
+    printWindow.document.close();
+    printWindow.print();
+  }
+
+  clearError() {
+    this.error.set(null);
+  }
+
+  hasActiveFilters(): boolean {
+    return (this.selectedYear !== new Date().getFullYear()) ||
+      (this.selectedMonth !== 0) ||
+      (this.selectedType !== 'all') ||
+      (this.searchTerm !== '') ||
+      (this.selectedCategory !== '');
+  }
+
+  getActiveFiltersCount(): number {
+    let count = 0;
+    if (this.selectedYear !== new Date().getFullYear()) count++;
+    if (this.selectedMonth !== 0) count++;
+    if (this.selectedType !== 'all') count++;
+    if (this.searchTerm !== '') count++;
+    if (this.selectedCategory !== '') count++;
+    return count;
+  }
+
+  clearFilters() {
+    this.selectedYear = new Date().getFullYear();
+    this.selectedMonth = 0;
+    this.selectedType = 'all';
+    this.searchTerm = '';
+    this.selectedCategory = '';
+    this.applyFilters();
+  }
+
+  closeMobileMenu() {
+    this.mobileMenuOpen.set(false);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.mobile-tabs-header')) {
+      this.closeMobileMenu();
+    }
+  }
+
+  isChartVisible = false;
+
+  @ViewChild('chartContainer') chartContainer!: ElementRef;
+
+  ngAfterViewInit() {
+    // Use Intersection Observer to detect when chart container is visible
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !this.isChartVisible) {
+          // Small delay to ensure container is fully rendered
+          setTimeout(() => {
+            this.isChartVisible = true;
+          }, 100);
+          observer.disconnect(); // Stop observing once chart is loaded
+        }
+      });
+    }, { threshold: 0.1 });
+
+    observer.observe(this.chartContainer.nativeElement);
+  }
+
+  menu=[
+    {icon:"cashbook/1.png", name:"Add Transaction", link:"/eAddTRANSACTION"},
+
+    {icon:"cashbook/3.png", name:"Payment Categories", link:"/ePayment-Transactions"},
+    {icon:"cashbook/6.png", name:"Receipt Categories", link:"/eReceipt-Transactions"},
+    {icon:"cashbook/11.png", name:"Transactions",link:"/eTRANSACTIONs" },
+    {icon:"cashbook/14.svg", name:"Monthly Analysis", link:"/eMonthlyAnalysis"},
+    {icon:"cashbook/8.png", name:"Payment Transactions", link:"/ePayment-Transactions"},
+    {icon:"cashbook/9.png", name:"Receipt Transactions", link:"/eReceipt-Transactions"},
+    {icon:"cashbook/13.svg", name:"Export To Excel", link:"/exportData"},
+    {icon:"cashbook/12.png", name:"Report A problem" , link:"/complain"},
+       ]
+}

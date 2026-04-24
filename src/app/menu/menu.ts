@@ -4,12 +4,14 @@ import {DashboardStatsComponent} from '../admin/dashboard/dashboard-stats/dashbo
 import {LoadingSpinnerComponent} from '../core/shared/components/loading-spinner/loading-spinner';
 import {NgForOf, NgIf} from '@angular/common';
  import {CashbookService} from '../core/services/cashbook.service';
+
 import {
 
   FilterCriteria,
 
   TransactionType
 } from '../core/model/cashbook.model';
+
 interface menuItems {
   icon:string;
   name: string;
@@ -24,6 +26,7 @@ interface menuItems {
     DashboardStatsComponent,
     LoadingSpinnerComponent,
     NgIf,
+
 
   ],
   templateUrl: './menu.html',
