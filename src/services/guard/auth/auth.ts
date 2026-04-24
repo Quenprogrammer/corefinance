@@ -31,7 +31,7 @@ export class AuthService {
   getRouteForRole(): string {
     switch(this.role) {
       case 'admin':
-        return '/menu';  // Admin goes to menu
+        return '/account-select';  // Admin goes to menu
       case 'user':
         return '/user';
       case 'viewer':

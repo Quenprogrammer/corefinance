@@ -46,7 +46,7 @@ export class Login {
 
     switch(role) {
       case 'admin':
-        this.router.navigate(['/menu']);  // Admin goes to menu
+        this.router.navigate(['/account-select']);  // Admin goes to menu
         break;
       case 'user':
         this.router.navigate(['/user']);
