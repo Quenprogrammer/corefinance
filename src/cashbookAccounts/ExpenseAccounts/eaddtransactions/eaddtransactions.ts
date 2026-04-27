@@ -850,19 +850,10 @@ interface CashbookEntry {
           <div class="page-header page-header-light">
             <div class="row align-items-center">
               <div class="col">
-                <h1 class="page-header-title">Dashboard</h1>
+                <h1 class="text-white">New Transaction Entry</h1>
+                <p class="text-white">Record your financial transactions with ease</p>
               </div>
-              <!-- End Col -->
 
-              <div class="col-auto">
-                <!-- Daterangepicker -->
-                <button id="js-daterangepicker-predefined" class="btn btn-ghost-light btn-sm dropdown-toggle">
-                  <i class="bi-calendar-week"></i>
-                  <span class="js-daterangepicker-predefined-preview ms-1">Apr 23 - Apr 23, 2026</span>
-                </button>
-                <!-- End Daterangepicker -->
-              </div>
-              <!-- End Col -->
             </div>
             <!-- End Row -->
 
@@ -880,24 +871,7 @@ interface CashbookEntry {
               </a>
             </span>
 
-              <!-- Nav -->
-              <ul class="nav nav-tabs nav-tabs-light page-header-tabs" id="pageHeaderTab" role="tablist">
-                <li class="nav-item">
-                  <a class="nav-link active" href="javascript:;">Overview</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link disabled" href="javascript:;">Status</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link disabled" href="javascript:;">
-                    Sessions
-                    <span class="badge bg-warning text-dark rounded-pill ms-1">
-                    <i class="bi-exclamation-triangle-fill me-1"></i> Verification required
-                  </span>
-                  </a>
-                </li>
-              </ul>
-              <!-- End Nav -->
+
             </div>
             <!-- End Nav Scroller -->
           </div>
@@ -912,145 +886,468 @@ interface CashbookEntry {
         <div class="card mb-3 mb-lg-5">
           <!-- Header -->
           <div class="card-header card-header-content-sm-between">
-            <h4 class="card-header-title mb-2 mb-sm-0">Recent projects</h4>
+            <h2 class="card-header-title mb-2 mb-sm-0">Transaction Details</h2>
 
-            <!-- Nav -->
-            <ul class="nav nav-segment nav-fill" id="projectsTab" role="tablist">
-              <li class="nav-item" data-bs-toggle="chart" data-datasets="0" data-trigger="click" data-action="toggle"
-                  role="presentation">
-                <a class="nav-link active" href="javascript:;" data-bs-toggle="tab" aria-selected="true" role="tab">This
-                  week</a>
-              </li>
-              <li class="nav-item" data-bs-toggle="chart" data-datasets="1" data-trigger="click" data-action="toggle"
-                  role="presentation">
-                <a class="nav-link" href="javascript:;" data-bs-toggle="tab" aria-selected="false" tabindex="-1"
-                   role="tab">Last week</a>
-              </li>
-            </ul>
-            <!-- End Nav -->
+            <div class="transaction-toggle">
+              <button type="button"
+                      [class.active]="entry.transactionType === 'receipt'"
+                      (click)="setTransactionType('receipt')"
+                      class="toggle-btn receipt-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                </svg>
+                Receipt
+              </button>
+              <button type="button"
+                      [class.active]="entry.transactionType === 'payment'"
+                      (click)="setTransactionType('payment')"
+                      class="toggle-btn payment-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                </svg>
+                Payment
+              </button>
+            </div>
           </div>
           <!-- End Header -->
 
           <!-- Body -->
-          <div class="card-body">
-            <div class="row align-items-sm-center mb-4">
-              <div class="col-sm mb-3 mb-sm-0">
-                <div class="d-flex align-items-center">
-                  <span class="h1 mb-0">$7,431.14 USD</span>
+          <div class="card- body">
 
-                  <span class="text-success ms-2">
-                  <i class="bi-graph-up"></i> 25.3%
-                </span>
-                </div>
-              </div>
-              <!-- End Col -->
+            <div class="form-container">
 
-              <div class="col-sm-auto">
-                <!-- Legend Indicators -->
-                <div class="row fs-6">
-                  <div class="col-auto">
-                    <span class="legend-indicator bg-primary"></span> Income
+
+              <div class="form-body">
+                <form #entryForm="ngForm" (ngSubmit)="onSubmit()">
+                  <!-- Transaction Type Toggle -->
+
+
+                  <div class="form-grid">
+                    <!-- Basic Information Section -->
+                    <div class="form-section">
+                      <div class="section-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" fill="currentColor"/>
+                        </svg>
+                        <span>Basic Information</span>
+                      </div>
+                      <div class="section-content">
+                        <div class="form-field">
+                          <label class="field-label">
+                            <span class="label-text">Date</span>
+                            <span class="required-star">*</span>
+                          </label>
+                          <input type="date"
+                                 class="form-input"
+                                 [class.invalid]="dateInvalid && dateTouched"
+                                 [(ngModel)]="dateString"
+                                 (ngModelChange)="onDateChange($event)"
+                                 name="date"
+                                 required
+                                 (blur)="dateTouched = true">
+                          <div class="validation-message" *ngIf="dateInvalid && dateTouched">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                            </svg>
+                            Date is required
+                          </div>
+                        </div>
+
+                        <div class="form-field">
+                          <label class="field-label">
+                            <span class="label-text">Voucher Number</span>
+                            <span class="required-star">*</span>
+                          </label>
+                          <input type="number"
+                                 class="form-input"
+                                 [class.invalid]="voucherNumberInvalid && voucherNumberTouched"
+                                 [(ngModel)]="entry.voucherNumber"
+                                 name="voucherNumber"
+                                 required
+                                 min="1"
+                                 (blur)="voucherNumberTouched = true"
+                                 placeholder="Enter voucher number">
+                          <div class="validation-message" *ngIf="voucherNumberInvalid && voucherNumberTouched">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                            </svg>
+                            <span *ngIf="!entry.voucherNumber">Voucher number is required</span>
+                            <span *ngIf="entry.voucherNumber && entry.voucherNumber < 1">Voucher number must be greater than 0</span>
+                          </div>
+                        </div>
+
+                        <!-- Updated Category Field - Textbox with Select Category Button -->
+                        <div class="form-field">
+                          <label class="field-label">
+                            <span class="label-text">Category</span>
+                            <span class="required-star">*</span>
+                          </label>
+                          <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="text"
+                                   class="form-input"
+                                   [class.invalid]="categoryInvalid && categoryTouched"
+                                   [(ngModel)]="currentCategory"
+                                   name="category"
+                                   required
+                                   (blur)="categoryTouched = true"
+                                   placeholder="Enter category or click 'Select Category'"
+                                   style="flex: 1;">
+                            <button type="button"
+                                    class="btn-select-category"
+                                    (click)="openCategoryModal()">
+                              Select Category
+                            </button>
+                          </div>
+                          <div class="validation-message" *ngIf="categoryInvalid && categoryTouched">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                            </svg>
+                            Please select or enter a category
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Party Information Section -->
+                    <div class="form-section">
+                      <div class="section-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="currentColor"/>
+                        </svg>
+                        <span>Party Information</span>
+                      </div>
+                      <div class="section-content">
+                        <div class="form-field" *ngIf="entry.transactionType === 'receipt'">
+                          <label class="field-label">
+                            <span class="label-text">Received From</span>
+                            <span class="required-star">*</span>
+                          </label>
+                          <input type="text"
+                                 class="form-input"
+                                 [class.invalid]="receivedFromInvalid && receivedFromTouched"
+                                 [(ngModel)]="entry.receivedFrom"
+                                 name="receivedFrom"
+                                 required
+                                 (blur)="receivedFromTouched = true"
+                                 placeholder="Enter sender name">
+                          <div class="validation-message" *ngIf="receivedFromInvalid && receivedFromTouched">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                            </svg>
+                            Please enter the sender's name
+                          </div>
+                        </div>
+
+                        <div class="form-field" *ngIf="entry.transactionType === 'payment'">
+                          <label class="field-label">
+                            <span class="label-text">Paid To</span>
+                            <span class="required-star">*</span>
+                          </label>
+                          <input type="text"
+                                 class="form-input"
+                                 [class.invalid]="paidToInvalid && paidToTouched"
+                                 [(ngModel)]="entry.paidTo"
+                                 name="paidTo"
+                                 required
+                                 (blur)="paidToTouched = true"
+                                 placeholder="Enter payee name">
+                          <div class="validation-message" *ngIf="paidToInvalid && paidToTouched">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                            </svg>
+                            Please enter the payee's name
+                          </div>
+                        </div>
+
+                        <div class="form-field">
+                          <label class="field-label">
+                            <span class="label-text">Description</span>
+                            <span class="required-star">*</span>
+                          </label>
+                          <input type="text"
+                                 class="form-input"
+                                 [class.invalid]="descriptionInvalid && descriptionTouched"
+                                 [(ngModel)]="entry.description"
+                                 name="description"
+                                 required
+                                 minlength="3"
+                                 maxlength="200"
+                                 (blur)="descriptionTouched = true"
+                                 placeholder="Enter transaction description">
+                          <div class="validation-message" *ngIf="descriptionInvalid && descriptionTouched">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                            </svg>
+                            <span *ngIf="!entry.description">Description is required</span>
+                            <span *ngIf="entry.description && entry.description.length < 3">Description must be at least 3 characters</span>
+                            <span *ngIf="entry.description && entry.description.length > 200">Description cannot exceed 200 characters</span>
+                          </div>
+                        </div>
+
+                        <div class="form-field" *ngIf="entry.transactionType === 'receipt'">
+                          <label class="field-label">Receipt Number</label>
+                          <input type="text"
+                                 class="form-input"
+                                 [class.invalid]="receiptNumberInvalid"
+                                 [(ngModel)]="entry.receiptNumber"
+                                 name="receiptNumber"
+                                 maxlength="50"
+                                 placeholder="Optional">
+                          <div class="validation-message" *ngIf="receiptNumberInvalid">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                            </svg>
+                            Receipt number cannot exceed 50 characters
+                          </div>
+                        </div>
+
+                        <div class="form-field" *ngIf="entry.transactionType === 'payment'">
+                          <label class="field-label">DV Number</label>
+                          <input type="text"
+                                 class="form-input"
+                                 [class.invalid]="dvNumberInvalid"
+                                 [(ngModel)]="entry.dvNumber"
+                                 name="dvNumber"
+                                 maxlength="50"
+                                 placeholder="Optional">
+                          <div class="validation-message" *ngIf="dvNumberInvalid">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                            </svg>
+                            DV number cannot exceed 50 characters
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Financial Information Section -->
+                    <!-- Financial Information Section -->
+                    <div class="form-section">
+                      <div class="section-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z" fill="currentColor"/>
+                        </svg>
+                        <span>Financial Information</span>
+                      </div>
+                      <div class="section-content">
+                        <div class="form-field">
+                          <label class="field-label">
+                            <span class="label-text">NCOA Code</span>
+                            <span class="required-star">*</span>
+                          </label>
+                          <input type="text"
+                                 class="form-input"
+                                 [class.invalid]="ncoaCodeInvalid && ncoaCodeTouched"
+                                 [(ngModel)]="entry.ncoaCode"
+                                 name="ncoaCode"
+                                 required
+                                 pattern="[A-Z0-9-]+"
+                                 (blur)="ncoaCodeTouched = true"
+                                 placeholder="Enter NCOA code">
+                          <div class="validation-message" *ngIf="ncoaCodeInvalid && ncoaCodeTouched">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                            </svg>
+                            <span *ngIf="!entry.ncoaCode">NCOA code is required</span>
+                            <span *ngIf="entry.ncoaCode && !isNcoaCodeValid(entry.ncoaCode)">
+          NCOA code can only contain uppercase letters, numbers, and hyphens
+        </span>
+                          </div>
+                        </div>
+
+                        <!-- Bank/Cash Selection -->
+                        <div class="form-field">
+                          <label class="field-label">
+                            <span class="label-text">Payment Mode</span>
+                            <span class="required-star">*</span>
+                          </label>
+                          <div class="payment-mode-toggle">
+                            <button type="button"
+                                    [class.active]="selectedPaymentMode === 'bank'"
+                                    (click)="setPaymentMode('bank')"
+                                    class="mode-btn bank-btn">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M4 10h16v2H4zM6 6h12v2H6z" fill="currentColor"/>
+                                <rect x="4" y="12" width="16" height="2" fill="currentColor"/>
+                                <path d="M12 2L2 7v2h20V7l-10-5z" fill="currentColor"/>
+                              </svg>
+                              Bank
+                            </button>
+                            <button type="button"
+                                    [class.active]="selectedPaymentMode === 'cash'"
+                                    (click)="setPaymentMode('cash')"
+                                    class="mode-btn cash-btn">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                              </svg>
+                              Cash
+                            </button>
+                          </div>
+                        </div>
+
+                        <!-- Bank Fields - Only show when Bank is selected -->
+                        <ng-container *ngIf="selectedPaymentMode === 'bank'">
+                          <div class="form-field">
+                            <label class="field-label">
+                              <span class="label-text">Bank Name</span>
+                              <span class="required-star">*</span>
+                            </label>
+                            <select class="form-input"
+                                    [class.invalid]="bankNameInvalid && bankNameTouched"
+                                    [(ngModel)]="entry.bankName"
+                                    name="bankName"
+                                    required
+                                    (blur)="bankNameTouched = true">
+                              <option value="" disabled selected>Select Bank</option>
+                              <option *ngFor="let bank of banks" [value]="bank">
+                                {{bank}}
+                              </option>
+                            </select>
+                            <div class="validation-message" *ngIf="bankNameInvalid && bankNameTouched">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                              </svg>
+                              Please select a bank
+                            </div>
+                          </div>
+
+                          <div class="form-field">
+                            <label class="field-label">
+                              <span class="label-text">Account Name</span>
+                              <span class="required-star">*</span>
+                            </label>
+                            <input type="text"
+                                   class="form-input"
+                                   [class.invalid]="accountNameInvalid && accountNameTouched"
+                                   [(ngModel)]="entry.accountName"
+                                   name="accountName"
+                                   required
+                                   (blur)="accountNameTouched = true"
+                                   placeholder="Enter account name">
+                            <div class="validation-message" *ngIf="accountNameInvalid && accountNameTouched">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                              </svg>
+                              Account name is required
+                            </div>
+                          </div>
+
+                          <div class="form-field">
+                            <label class="field-label">
+                              <span class="label-text">Account Number</span>
+                              <span class="required-star">*</span>
+                            </label>
+                            <input type="text"
+                                   class="form-input"
+                                   [class.invalid]="accountNumberInvalid && accountNumberTouched"
+                                   [(ngModel)]="entry.accountNumber"
+                                   name="accountNumber"
+                                   required
+                                   pattern="[0-9]{10}"
+                                   (blur)="accountNumberTouched = true"
+                                   placeholder="Enter 10-digit account number">
+                            <div class="validation-message" *ngIf="accountNumberInvalid && accountNumberTouched">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                              </svg>
+                              <span *ngIf="!entry.accountNumber">Account number is required</span>
+                              <span *ngIf="entry.accountNumber && !isAccountNumberValid(entry.accountNumber)">Account number must be exactly 10 digits</span>
+                            </div>
+                          </div>
+                        </ng-container>
+
+                        <!-- Note for Cash transactions -->
+                        <div class="info-message" *ngIf="selectedPaymentMode === 'cash'">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                          </svg>
+                          <span>Cash transaction - no bank details required</span>
+                        </div>
+
+                        <div class="form-field">
+                          <label class="field-label">
+                            <span class="label-text">Amount</span>
+                            <span class="required-star">*</span>
+                          </label>
+                          <div class="amount-input">
+                            <span class="currency-symbol">₦</span>
+                            <input type="number"
+                                   class="form-input amount-field"
+                                   [class.invalid]="amountInvalid && amountTouched"
+                                   [(ngModel)]="entry.amount"
+                                   name="amount"
+                                   required
+                                   min="0.01"
+                                   step="0.01"
+                                   (blur)="amountTouched = true"
+                                   placeholder="0.00">
+                          </div>
+                          <div class="validation-message" *ngIf="amountInvalid && amountTouched">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                            </svg>
+                            <span *ngIf="!entry.amount || entry.amount === 0">Amount is required</span>
+                            <span *ngIf="entry.amount && entry.amount < 0.01">Amount must be greater than 0</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div class="col-auto">
-                    <span class="legend-indicator bg-info"></span> Expenses
-                  </div>
-                </div>
-                <!-- End Legend Indicators -->
-              </div>
-              <!-- End Col -->
-            </div>
-            <!-- End Row -->
 
-            <!-- Bar Chart -->
-            <div class="chartjs-custom" style="height: 18rem;">
-              <canvas id="updatingLineChart" data-hs-chartjs-options="{
-                      &quot;type&quot;: &quot;line&quot;,
-                      &quot;data&quot;: {
-                         &quot;labels&quot;: [&quot;Feb&quot;,&quot;Jan&quot;,&quot;Mar&quot;,&quot;Apr&quot;,&quot;May&quot;,&quot;Jun&quot;,&quot;Jul&quot;,&quot;Aug&quot;,&quot;Sep&quot;,&quot;Oct&quot;,&quot;Nov&quot;,&quot;Dec&quot;],
-                         &quot;datasets&quot;: [{
-                          &quot;backgroundColor&quot;: [&quot;rgba(55,125,255, .5)&quot;, &quot;rgba(255, 255, 255, .2)&quot;],
-                          &quot;borderColor&quot;: &quot;#377dff&quot;,
-                          &quot;borderWidth&quot;: 2,
-                          &quot;pointRadius&quot;: 0,
-                          &quot;hoverBorderColor&quot;: &quot;#377dff&quot;,
-                          &quot;pointBackgroundColor&quot;: &quot;#377dff&quot;,
-                          &quot;pointBorderColor&quot;: &quot;#fff&quot;,
-                          &quot;pointHoverRadius&quot;: 0,
-                          &quot;tension&quot;: 0.4
-                        },
-                        {
-                          &quot;backgroundColor&quot;: [&quot;rgba(0, 201, 219, .5)&quot;, &quot;rgba(255, 255, 255, .2)&quot;],
-                          &quot;borderColor&quot;: &quot;#00c9db&quot;,
-                          &quot;borderWidth&quot;: 2,
-                          &quot;pointRadius&quot;: 0,
-                          &quot;hoverBorderColor&quot;: &quot;#00c9db&quot;,
-                          &quot;pointBackgroundColor&quot;: &quot;#00c9db&quot;,
-                          &quot;pointBorderColor&quot;: &quot;#fff&quot;,
-                          &quot;pointHoverRadius&quot;: 0,
-                          &quot;tension&quot;: 0.4
-                        }]
-                      },
-                      &quot;options&quot;: {
-                        &quot;gradientPosition&quot;: {&quot;y1&quot;: 200},
-                         &quot;scales&quot;: {
-                            &quot;y&quot;: {
-                              &quot;grid&quot;: {
-                                &quot;color&quot;: &quot;#e7eaf3&quot;,
-                                &quot;drawBorder&quot;: false,
-                                &quot;zeroLineColor&quot;: &quot;#e7eaf3&quot;
-                              },
-                              &quot;ticks&quot;: {
-                                &quot;min&quot;: 0,
-                                &quot;max&quot;: 100,
-                                &quot;stepSize&quot;: 20,
-                                &quot;fontColor&quot;: &quot;#97a4af&quot;,
-                                &quot;fontFamily&quot;: &quot;Open Sans, sans-serif&quot;,
-                                &quot;padding&quot;: 10,
-                                &quot;postfix&quot;: &quot;k&quot;
-                              }
-                            },
-                            &quot;x&quot;: {
-                              &quot;grid&quot;: {
-                                &quot;display&quot;: false,
-                                &quot;drawBorder&quot;: false
-                              },
-                              &quot;ticks&quot;: {
-                                &quot;fontSize&quot;: 12,
-                                &quot;fontColor&quot;: &quot;#97a4af&quot;,
-                                &quot;fontFamily&quot;: &quot;Open Sans, sans-serif&quot;,
-                                &quot;padding&quot;: 5
-                              }
-                            }
-                        },
-                        &quot;plugins&quot;: {
-                          &quot;tooltip&quot;: {
-                            &quot;prefix&quot;: &quot;$&quot;,
-                            &quot;postfix&quot;: &quot;k&quot;,
-                            &quot;hasIndicator&quot;: true,
-                            &quot;mode&quot;: &quot;index&quot;,
-                            &quot;intersect&quot;: false,
-                            &quot;lineMode&quot;: true,
-                            &quot;lineWithLineColor&quot;: &quot;rgba(19, 33, 68, 0.075)&quot;
-                          }
-                        },
-                        &quot;hover&quot;: {
-                          &quot;mode&quot;: &quot;nearest&quot;,
-                          &quot;intersect&quot;: true
-                        }
-                      }
-                    }" width="852" height="288"
-                      style="display: block; box-sizing: border-box; height: 288px; width: 852px;">
-              </canvas>
+                  <!-- Error Summary -->
+                  <div class="error-summary" *ngIf="showErrorSummary && !isFormValid()">
+                    <div class="error-summary-header">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                      </svg>
+                      <span>Please fix the following errors:</span>
+                    </div>
+                    <ul class="error-summary-list">
+                      <li *ngIf="dateInvalid">Date is required</li>
+                      <li *ngIf="voucherNumberInvalid">Valid voucher number is required (must be greater than 0)</li>
+                      <li *ngIf="categoryInvalid">Category is required</li>
+                      <li *ngIf="entry.transactionType === 'receipt' && receivedFromInvalid">Received From is required</li>
+                      <li *ngIf="entry.transactionType === 'payment' && paidToInvalid">Paid To is required</li>
+                      <li *ngIf="descriptionInvalid">
+                        <span *ngIf="!entry.description">Description is required</span>
+                        <span *ngIf="entry.description && entry.description.length < 3">Description must be at least 3 characters</span>
+                      </li>
+                      <li *ngIf="ncoaCodeInvalid">Valid NCOA code is required</li>
+                      <li *ngIf="!selectedPaymentMode">Payment mode is required</li>
+                      <li *ngIf="selectedPaymentMode === 'bank' && bankNameInvalid">Bank name is required</li>
+                      <li *ngIf="selectedPaymentMode === 'bank' && accountNameInvalid">Account name is required</li>
+                      <li *ngIf="selectedPaymentMode === 'bank' && accountNumberInvalid">
+                        <span *ngIf="!entry.accountNumber">Account number is required</span>
+                        <span *ngIf="entry.accountNumber && !isAccountNumberValid(entry.accountNumber)">Account number must be exactly 10 digits</span>
+                      </li>
+                      <li *ngIf="amountInvalid">Valid amount is required (must be greater than 0)</li>
+                    </ul>
+                  </div>
+
+                  <!-- Submit Button -->
+                  <div class="form-actions">
+                    <button type="button" class="btn-secondary" (click)="resetForm()">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/>
+                      </svg>
+                      Reset
+                    </button>
+                    <button type="submit" class="btn-primary" [disabled]="submitting() || !isFormValid()">
+                      <span *ngIf="submitting()" class="spinner"></span>
+                      <span *ngIf="!submitting()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+            </svg>
+            Add Transaction
+          </span>
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
-            <!-- End Bar Chart -->
           </div>
-          <!-- End Body -->
 
-          <!-- Card Footer -->
-          <a class="card-footer text-center" href="./projects.html">
-            View all projects <i class="bi-chevron-right"></i>
-          </a>
-          <!-- End Card Footer -->
+
         </div>
 
 
@@ -1061,468 +1358,7 @@ interface CashbookEntry {
 
 
 
-    <div class="form-container">
-      <div class="form-header">
-        <div class="header-content">
-          <div class="header-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
-            </svg>
-          </div>
-          <div class="header-text">
-            <h3>New Transaction Entry</h3>
-            <p>Record your financial transactions with ease</p>
-          </div>
-        </div>
-      </div>
 
-      <div class="form-body">
-        <form #entryForm="ngForm" (ngSubmit)="onSubmit()">
-          <!-- Transaction Type Toggle -->
-          <div class="transaction-toggle">
-            <button type="button"
-                    [class.active]="entry.transactionType === 'receipt'"
-                    (click)="setTransactionType('receipt')"
-                    class="toggle-btn receipt-btn">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
-              </svg>
-              Receipt
-            </button>
-            <button type="button"
-                    [class.active]="entry.transactionType === 'payment'"
-                    (click)="setTransactionType('payment')"
-                    class="toggle-btn payment-btn">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
-              </svg>
-              Payment
-            </button>
-          </div>
-
-          <div class="form-grid">
-            <!-- Basic Information Section -->
-            <div class="form-section">
-              <div class="section-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" fill="currentColor"/>
-                </svg>
-                <span>Basic Information</span>
-              </div>
-              <div class="section-content">
-                <div class="form-field">
-                  <label class="field-label">
-                    <span class="label-text">Date</span>
-                    <span class="required-star">*</span>
-                  </label>
-                  <input type="date"
-                         class="form-input"
-                         [class.invalid]="dateInvalid && dateTouched"
-                         [(ngModel)]="dateString"
-                         (ngModelChange)="onDateChange($event)"
-                         name="date"
-                         required
-                         (blur)="dateTouched = true">
-                  <div class="validation-message" *ngIf="dateInvalid && dateTouched">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
-                    </svg>
-                    Date is required
-                  </div>
-                </div>
-
-                <div class="form-field">
-                  <label class="field-label">
-                    <span class="label-text">Voucher Number</span>
-                    <span class="required-star">*</span>
-                  </label>
-                  <input type="number"
-                         class="form-input"
-                         [class.invalid]="voucherNumberInvalid && voucherNumberTouched"
-                         [(ngModel)]="entry.voucherNumber"
-                         name="voucherNumber"
-                         required
-                         min="1"
-                         (blur)="voucherNumberTouched = true"
-                         placeholder="Enter voucher number">
-                  <div class="validation-message" *ngIf="voucherNumberInvalid && voucherNumberTouched">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
-                    </svg>
-                    <span *ngIf="!entry.voucherNumber">Voucher number is required</span>
-                    <span *ngIf="entry.voucherNumber && entry.voucherNumber < 1">Voucher number must be greater than 0</span>
-                  </div>
-                </div>
-
-                <!-- Updated Category Field - Textbox with Select Category Button -->
-                <div class="form-field">
-                  <label class="field-label">
-                    <span class="label-text">Category</span>
-                    <span class="required-star">*</span>
-                  </label>
-                  <div style="display: flex; gap: 8px; align-items: center;">
-                    <input type="text"
-                           class="form-input"
-                           [class.invalid]="categoryInvalid && categoryTouched"
-                           [(ngModel)]="currentCategory"
-                           name="category"
-                           required
-                           (blur)="categoryTouched = true"
-                           placeholder="Enter category or click 'Select Category'"
-                           style="flex: 1;">
-                    <button type="button"
-                            class="btn-select-category"
-                            (click)="openCategoryModal()">
-                      Select Category
-                    </button>
-                  </div>
-                  <div class="validation-message" *ngIf="categoryInvalid && categoryTouched">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
-                    </svg>
-                    Please select or enter a category
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Party Information Section -->
-            <div class="form-section">
-              <div class="section-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="currentColor"/>
-                </svg>
-                <span>Party Information</span>
-              </div>
-              <div class="section-content">
-                <div class="form-field" *ngIf="entry.transactionType === 'receipt'">
-                  <label class="field-label">
-                    <span class="label-text">Received From</span>
-                    <span class="required-star">*</span>
-                  </label>
-                  <input type="text"
-                         class="form-input"
-                         [class.invalid]="receivedFromInvalid && receivedFromTouched"
-                         [(ngModel)]="entry.receivedFrom"
-                         name="receivedFrom"
-                         required
-                         (blur)="receivedFromTouched = true"
-                         placeholder="Enter sender name">
-                  <div class="validation-message" *ngIf="receivedFromInvalid && receivedFromTouched">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
-                    </svg>
-                    Please enter the sender's name
-                  </div>
-                </div>
-
-                <div class="form-field" *ngIf="entry.transactionType === 'payment'">
-                  <label class="field-label">
-                    <span class="label-text">Paid To</span>
-                    <span class="required-star">*</span>
-                  </label>
-                  <input type="text"
-                         class="form-input"
-                         [class.invalid]="paidToInvalid && paidToTouched"
-                         [(ngModel)]="entry.paidTo"
-                         name="paidTo"
-                         required
-                         (blur)="paidToTouched = true"
-                         placeholder="Enter payee name">
-                  <div class="validation-message" *ngIf="paidToInvalid && paidToTouched">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
-                    </svg>
-                    Please enter the payee's name
-                  </div>
-                </div>
-
-                <div class="form-field">
-                  <label class="field-label">
-                    <span class="label-text">Description</span>
-                    <span class="required-star">*</span>
-                  </label>
-                  <input type="text"
-                         class="form-input"
-                         [class.invalid]="descriptionInvalid && descriptionTouched"
-                         [(ngModel)]="entry.description"
-                         name="description"
-                         required
-                         minlength="3"
-                         maxlength="200"
-                         (blur)="descriptionTouched = true"
-                         placeholder="Enter transaction description">
-                  <div class="validation-message" *ngIf="descriptionInvalid && descriptionTouched">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
-                    </svg>
-                    <span *ngIf="!entry.description">Description is required</span>
-                    <span *ngIf="entry.description && entry.description.length < 3">Description must be at least 3 characters</span>
-                    <span *ngIf="entry.description && entry.description.length > 200">Description cannot exceed 200 characters</span>
-                  </div>
-                </div>
-
-                <div class="form-field" *ngIf="entry.transactionType === 'receipt'">
-                  <label class="field-label">Receipt Number</label>
-                  <input type="text"
-                         class="form-input"
-                         [class.invalid]="receiptNumberInvalid"
-                         [(ngModel)]="entry.receiptNumber"
-                         name="receiptNumber"
-                         maxlength="50"
-                         placeholder="Optional">
-                  <div class="validation-message" *ngIf="receiptNumberInvalid">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
-                    </svg>
-                    Receipt number cannot exceed 50 characters
-                  </div>
-                </div>
-
-                <div class="form-field" *ngIf="entry.transactionType === 'payment'">
-                  <label class="field-label">DV Number</label>
-                  <input type="text"
-                         class="form-input"
-                         [class.invalid]="dvNumberInvalid"
-                         [(ngModel)]="entry.dvNumber"
-                         name="dvNumber"
-                         maxlength="50"
-                         placeholder="Optional">
-                  <div class="validation-message" *ngIf="dvNumberInvalid">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
-                    </svg>
-                    DV number cannot exceed 50 characters
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Financial Information Section -->
-            <!-- Financial Information Section -->
-            <div class="form-section">
-              <div class="section-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z" fill="currentColor"/>
-                </svg>
-                <span>Financial Information</span>
-              </div>
-              <div class="section-content">
-                <div class="form-field">
-                  <label class="field-label">
-                    <span class="label-text">NCOA Code</span>
-                    <span class="required-star">*</span>
-                  </label>
-                  <input type="text"
-                         class="form-input"
-                         [class.invalid]="ncoaCodeInvalid && ncoaCodeTouched"
-                         [(ngModel)]="entry.ncoaCode"
-                         name="ncoaCode"
-                         required
-                         pattern="[A-Z0-9-]+"
-                         (blur)="ncoaCodeTouched = true"
-                         placeholder="Enter NCOA code">
-                  <div class="validation-message" *ngIf="ncoaCodeInvalid && ncoaCodeTouched">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
-                    </svg>
-                    <span *ngIf="!entry.ncoaCode">NCOA code is required</span>
-                    <span *ngIf="entry.ncoaCode && !isNcoaCodeValid(entry.ncoaCode)">
-          NCOA code can only contain uppercase letters, numbers, and hyphens
-        </span>
-                  </div>
-                </div>
-
-                <!-- Bank/Cash Selection -->
-                <div class="form-field">
-                  <label class="field-label">
-                    <span class="label-text">Payment Mode</span>
-                    <span class="required-star">*</span>
-                  </label>
-                  <div class="payment-mode-toggle">
-                    <button type="button"
-                            [class.active]="selectedPaymentMode === 'bank'"
-                            (click)="setPaymentMode('bank')"
-                            class="mode-btn bank-btn">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <path d="M4 10h16v2H4zM6 6h12v2H6z" fill="currentColor"/>
-                        <rect x="4" y="12" width="16" height="2" fill="currentColor"/>
-                        <path d="M12 2L2 7v2h20V7l-10-5z" fill="currentColor"/>
-                      </svg>
-                      Bank
-                    </button>
-                    <button type="button"
-                            [class.active]="selectedPaymentMode === 'cash'"
-                            (click)="setPaymentMode('cash')"
-                            class="mode-btn cash-btn">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
-                      </svg>
-                      Cash
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Bank Fields - Only show when Bank is selected -->
-                <ng-container *ngIf="selectedPaymentMode === 'bank'">
-                  <div class="form-field">
-                    <label class="field-label">
-                      <span class="label-text">Bank Name</span>
-                      <span class="required-star">*</span>
-                    </label>
-                    <select class="form-input"
-                            [class.invalid]="bankNameInvalid && bankNameTouched"
-                            [(ngModel)]="entry.bankName"
-                            name="bankName"
-                            required
-                            (blur)="bankNameTouched = true">
-                      <option value="" disabled selected>Select Bank</option>
-                      <option *ngFor="let bank of banks" [value]="bank">
-                        {{bank}}
-                      </option>
-                    </select>
-                    <div class="validation-message" *ngIf="bankNameInvalid && bankNameTouched">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
-                      </svg>
-                      Please select a bank
-                    </div>
-                  </div>
-
-                  <div class="form-field">
-                    <label class="field-label">
-                      <span class="label-text">Account Name</span>
-                      <span class="required-star">*</span>
-                    </label>
-                    <input type="text"
-                           class="form-input"
-                           [class.invalid]="accountNameInvalid && accountNameTouched"
-                           [(ngModel)]="entry.accountName"
-                           name="accountName"
-                           required
-                           (blur)="accountNameTouched = true"
-                           placeholder="Enter account name">
-                    <div class="validation-message" *ngIf="accountNameInvalid && accountNameTouched">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
-                      </svg>
-                      Account name is required
-                    </div>
-                  </div>
-
-                  <div class="form-field">
-                    <label class="field-label">
-                      <span class="label-text">Account Number</span>
-                      <span class="required-star">*</span>
-                    </label>
-                    <input type="text"
-                           class="form-input"
-                           [class.invalid]="accountNumberInvalid && accountNumberTouched"
-                           [(ngModel)]="entry.accountNumber"
-                           name="accountNumber"
-                           required
-                           pattern="[0-9]{10}"
-                           (blur)="accountNumberTouched = true"
-                           placeholder="Enter 10-digit account number">
-                    <div class="validation-message" *ngIf="accountNumberInvalid && accountNumberTouched">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
-                      </svg>
-                      <span *ngIf="!entry.accountNumber">Account number is required</span>
-                      <span *ngIf="entry.accountNumber && !isAccountNumberValid(entry.accountNumber)">Account number must be exactly 10 digits</span>
-                    </div>
-                  </div>
-                </ng-container>
-
-                <!-- Note for Cash transactions -->
-                <div class="info-message" *ngIf="selectedPaymentMode === 'cash'">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
-                  </svg>
-                  <span>Cash transaction - no bank details required</span>
-                </div>
-
-                <div class="form-field">
-                  <label class="field-label">
-                    <span class="label-text">Amount</span>
-                    <span class="required-star">*</span>
-                  </label>
-                  <div class="amount-input">
-                    <span class="currency-symbol">₦</span>
-                    <input type="number"
-                           class="form-input amount-field"
-                           [class.invalid]="amountInvalid && amountTouched"
-                           [(ngModel)]="entry.amount"
-                           name="amount"
-                           required
-                           min="0.01"
-                           step="0.01"
-                           (blur)="amountTouched = true"
-                           placeholder="0.00">
-                  </div>
-                  <div class="validation-message" *ngIf="amountInvalid && amountTouched">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
-                    </svg>
-                    <span *ngIf="!entry.amount || entry.amount === 0">Amount is required</span>
-                    <span *ngIf="entry.amount && entry.amount < 0.01">Amount must be greater than 0</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Error Summary -->
-          <div class="error-summary" *ngIf="showErrorSummary && !isFormValid()">
-            <div class="error-summary-header">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
-              </svg>
-              <span>Please fix the following errors:</span>
-            </div>
-            <ul class="error-summary-list">
-              <li *ngIf="dateInvalid">Date is required</li>
-              <li *ngIf="voucherNumberInvalid">Valid voucher number is required (must be greater than 0)</li>
-              <li *ngIf="categoryInvalid">Category is required</li>
-              <li *ngIf="entry.transactionType === 'receipt' && receivedFromInvalid">Received From is required</li>
-              <li *ngIf="entry.transactionType === 'payment' && paidToInvalid">Paid To is required</li>
-              <li *ngIf="descriptionInvalid">
-                <span *ngIf="!entry.description">Description is required</span>
-                <span *ngIf="entry.description && entry.description.length < 3">Description must be at least 3 characters</span>
-              </li>
-              <li *ngIf="ncoaCodeInvalid">Valid NCOA code is required</li>
-              <li *ngIf="!selectedPaymentMode">Payment mode is required</li>
-              <li *ngIf="selectedPaymentMode === 'bank' && bankNameInvalid">Bank name is required</li>
-              <li *ngIf="selectedPaymentMode === 'bank' && accountNameInvalid">Account name is required</li>
-              <li *ngIf="selectedPaymentMode === 'bank' && accountNumberInvalid">
-                <span *ngIf="!entry.accountNumber">Account number is required</span>
-                <span *ngIf="entry.accountNumber && !isAccountNumberValid(entry.accountNumber)">Account number must be exactly 10 digits</span>
-              </li>
-              <li *ngIf="amountInvalid">Valid amount is required (must be greater than 0)</li>
-            </ul>
-          </div>
-
-          <!-- Submit Button -->
-          <div class="form-actions">
-            <button type="button" class="btn-secondary" (click)="resetForm()">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/>
-              </svg>
-              Reset
-            </button>
-            <button type="submit" class="btn-primary" [disabled]="submitting() || !isFormValid()">
-              <span *ngIf="submitting()" class="spinner"></span>
-              <span *ngIf="!submitting()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
-            </svg>
-            Add Transaction
-          </span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
 
     <!-- Category Selection Modal -->
     <div class="modal-overlay" *ngIf="showCategoryModal" (click)="closeCategoryModal()">
