@@ -109,7 +109,7 @@ import { Subscription } from 'rxjs';
                     <tbody>
                       @for (transaction of getCategoryTransactions(category); track transaction.id) {
                         <tr class="transaction-row">
-                          <td>{{ transaction.date | date:'dd/MM/yyyy' }}</td>
+                          <td>{{ formatDate(transaction.date) }}</td>
                           <td>{{ transaction.voucherNumber }}</td>
                           <td>{{ transaction.description }}</td>
                           <td><code>{{ transaction.ncoaCode }}</code></td>
@@ -585,5 +585,26 @@ export class Epaymentcategories implements OnInit {
       'Other Payments': '📦'
     };
     return icons[category] || '📌';
+  }
+  formatDate(dateValue: any): string {
+    if (!dateValue) return '-';
+
+    let date: Date;
+    if (typeof dateValue === 'object' && dateValue !== null && 'toDate' in dateValue) {
+      date = dateValue.toDate();
+    } else if (typeof dateValue === 'object' && dateValue !== null && 'seconds' in dateValue) {
+      date = new Date(dateValue.seconds * 1000);
+    } else if (dateValue instanceof Date) {
+      date = dateValue;
+    } else {
+      date = new Date(dateValue);
+    }
+
+    if (isNaN(date.getTime())) return '-';
+
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   }
 }

@@ -187,7 +187,11 @@ export const routes: Routes = [
   {path: 'pPayment-Transactions', loadComponent: () => import('../cashbookAccounts/personal/paymentcategories/paymentcategories').then(m => m.Paymentcategories), canActivate: [RoleGuard], data: { role: 'admin' }},
   {path: 'pReceipt-Transactions', loadComponent: () => import('../cashbookAccounts/personal/preciept-categories/preciept-categories').then(m => m.PrecieptCategories), canActivate: [RoleGuard], data: { role: 'admin' }},
   {path: 'precieptLedger', loadComponent: () => import('../cashbookAccounts/personal/preciept-ledger/preciept-ledger').then(m => m.PrecieptLedger), canActivate: [RoleGuard], data: { role: 'admin' }},
+
+
+
   {path: 'ppaymentLedger', loadComponent: () => import('../cashbookAccounts/personal/ppayment-ledger/ppayment-ledger').then(m => m.PpaymentLedger), canActivate: [RoleGuard], data: { role: 'admin' }},
+  {path: 'editor', loadComponent: () => import('../applications-server/editor/editor').then(m => m.Editor)},
 
 
 
